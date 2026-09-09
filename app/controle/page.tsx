@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { ArrowDownLeft, ArrowUpRight, BarChart3, CalendarDays, CircleDollarSign, FileSpreadsheet, PiggyBank, Wallet } from 'lucide-react'
-import { ESTRUTURA_ORCAMENTO, MESES_2026, REGRAS_APLICACAO } from '@/lib/modelo-orcamento'
+import { ESTRUTURA_ORCAMENTO, MESES_2026, REGRAS_APLICACAO } from '../../lib/modelo-orcamento'
 
 const moeda = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 
@@ -18,7 +18,6 @@ const modulos = [
 export default function ControlePage() {
   const [mes, setMes] = useState<(typeof MESES_2026)[number]>('Set/26')
   const [modulo, setModulo] = useState('visao')
-  const indice = MESES_2026.indexOf(mes)
   const grupos = useMemo(() => {
     const map = new Map<string, typeof ESTRUTURA_ORCAMENTO>()
     ESTRUTURA_ORCAMENTO.forEach((linha) => {
@@ -58,9 +57,9 @@ export default function ControlePage() {
         </section>
 
         <section className="mb-6 grid gap-4 sm:grid-cols-3">
-          <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><span className="text-sm text-slate-500">Receitas</span><strong className="mt-2 block text-2xl">—</strong><small className="text-xs text-slate-400">Aguardando homologação dos valores</small></article>
-          <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><span className="text-sm text-slate-500">Despesas familiares</span><strong className="mt-2 block text-2xl">—</strong><small className="text-xs text-slate-400">Aguardando homologação dos valores</small></article>
-          <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><span className="text-sm text-slate-500">Resultado</span><strong className="mt-2 block text-2xl"><CircleDollarSign className="inline mr-2" size={20} />—</strong><small className="text-xs text-slate-400">Será calculado com a base homologada</small></article>
+          <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><span className="text-sm text-slate-500">Receitas</span><strong className="mt-2 block text-2xl">{moeda(0)}</strong><small className="text-xs text-slate-400">Base pronta para homologação</small></article>
+          <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><span className="text-sm text-slate-500">Despesas familiares</span><strong className="mt-2 block text-2xl">{moeda(0)}</strong><small className="text-xs text-slate-400">Despesas tratadas como familiares</small></article>
+          <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><span className="text-sm text-slate-500">Resultado</span><strong className="mt-2 block text-2xl"><CircleDollarSign className="inline mr-2" size={20} />{moeda(0)}</strong><small className="text-xs text-slate-400">Receitas menos despesas oficiais</small></article>
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
@@ -91,7 +90,7 @@ export default function ControlePage() {
             </article>
             <article className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
               <strong>Fase atual</strong>
-              <p className="mt-1">Estruturação funcional. Os valores reais ficam fora do código público. A homologação numérica será a próxima fase, após validarmos o comportamento da aplicação.</p>
+              <p className="mt-1">Estruturação funcional. Os valores reais ficam fora do código público. A homologação numérica será a próxima fase.</p>
             </article>
           </aside>
         </section>
