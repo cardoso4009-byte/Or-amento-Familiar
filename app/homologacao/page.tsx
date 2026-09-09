@@ -5,13 +5,13 @@ import { useMemo, useRef, useState } from 'react'
 const meses = ['Jan/26','Fev/26','Mar/26','Abr/26','Mai/26','Jun/26','Jul/26','Ago/26','Set/26','Out/26','Nov/26','Dez/26']
 
 const linhas = [
-  'RECEITAS','Salários','Léo','Nat','Férias','Léo','Nat','13º Salário','Léo','Nat','Bônus','Léo','Nat','IR / Dissídio','Léo','Nat','Renda Familiar',
+  'RECEITAS','Salários','Salários - Léo','Salários - Nat','Férias','Férias - Léo','Férias - Nat','13º Salário','13º - Léo','13º - Nat','Bônus','Bônus - Léo','Bônus - Nat','IR / Dissídio','IR / Dissídio - Léo','IR / Dissídio - Nat','Renda Familiar',
   'DESPESAS','Despesas Fixas','Bancos e Acordos','Despesas Totais','Despesas Diversas','RESULTADO','Fluxo de Caixa do Período',
 ]
 
 type Dados = Record<string, number[]>
-
-const vazio: Dados = Object.fromEntries(linhas.filter((x) => !['RECEITAS','DESPESAS','RESULTADO'].includes(x)).map((x) => [x, Array(12).fill(0)]))
+const vazias = linhas.filter((x) => !['RECEITAS','DESPESAS','RESULTADO'].includes(x))
+const vazio: Dados = Object.fromEntries(vazias.map((x) => [x, Array(12).fill(0)]))
 
 function parseCsv(text: string): Dados {
   const result: Dados = JSON.parse(JSON.stringify(vazio))
