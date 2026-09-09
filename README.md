@@ -1,22 +1,50 @@
 # Orçamento Familiar
 
-Aplicativo simples para controle de proventos, despesas e fluxo de caixa familiar.
+Aplicativo web simples para controle e acompanhamento do orçamento familiar: proventos, despesas, contas, transferências, limites por categoria e fluxo de caixa.
 
-## V1
+## Objetivo
 
-- Dashboard financeiro mensal
-- Cadastro de proventos e despesas
-- Categorias personalizadas
-- Saldo do mês
-- Indicador de comprometimento da renda
-- Visão inicial do fluxo de caixa
-- Layout responsivo para computador e celular
+Ter uma visão rápida de **quanto entrou, quanto saiu, quanto está disponível e onde o dinheiro está sendo gasto**.
 
-## Próximas etapas
+## Recursos atuais
 
-- Persistência em banco de dados
-- Contas e cartões
-- Parcelamentos e recorrências
-- Orçamento por categoria
-- Relatórios e comparativos
-- Login e dados individuais
+- Dashboard mensal
+- Proventos e despesas
+- Inclusão, edição e exclusão de lançamentos
+- Categorias
+- Contas e saldos estimados
+- Transferências entre contas
+- Orçamento e limite por categoria
+- Indicadores financeiros
+- Ranking de despesas
+- Evolução mensal
+- Fluxo de caixa diário
+- Filtros e pesquisa de lançamentos
+- Persistência local no navegador (`localStorage`)
+- Interface responsiva para computador e celular
+
+## Regra principal
+
+Transferências entre contas **não são consideradas receita nem despesa**. Elas apenas movimentam o dinheiro entre contas.
+
+## Dados
+
+A versão atual é local-first: os lançamentos ficam salvos no navegador utilizado. Nenhum dado financeiro real deve ser colocado no repositório GitHub.
+
+## Próxima evolução
+
+Quando a experiência estiver validada, podemos adicionar banco de dados, login, sincronização entre dispositivos, cartões, parcelas e recorrências.
+
+## Desenvolvimento
+
+```bash
+npm install
+npm run dev
+```
+
+Para validar a produção:
+
+```bash
+npm run build
+npm start
+```
