@@ -7,12 +7,26 @@ export type TipoReceita =
   | 'Bônus'
   | 'IR / Dissídio'
 
+export type GrupoDespesa =
+  | 'Despesas fixas'
+  | 'Bancos e Acordos'
+  | 'Despesas Diversas'
+
 export type ReceitaFamiliar = {
   id: number
   responsavel: ResponsavelRenda
   tipo: TipoReceita
   competencia: string
   valor: number
+}
+
+export type DespesaFamiliar = {
+  id: number
+  grupo: GrupoDespesa
+  descricao: string
+  competencia: string
+  valor: number
+  contaId?: number
 }
 
 export type ReferenciaMensal = {
@@ -45,6 +59,34 @@ export function totalRendaFamiliar(
   return receitas
     .filter((r) => !competencia || r.competencia === competencia)
     .reduce((total, r) => total + r.valor, 0)
+}
+
+/** Soma as despesas que compõem o total oficial da planilha. */
+export function totalDespesasHomologadas(
+  despesas: DespesaFamiliar[],
+  competencia?: string,
+): number {
+  return despesas
+    .filter(
+      (d) =>
+        d.grupo !== 'Despesas Diversas' &&
+        (!competencia || d.competencia === competencia),
+    )
+    .reduce((total, d) => total + d.valor, 0)
+}
+
+/** Soma as despesas diversas separadamente, sem alterar o total oficial. */
+export function totalDespesasDiversas(
+  despesas: DespesaFamiliar[],
+  competencia?: string,
+): number {
+  return despesas
+    .filter(
+      (d) =>
+        d.grupo === 'Despesas Diversas' &&
+        (!competencia || d.competencia === competencia),
+    )
+    .reduce((total, d) => total + d.valor, 0)
 }
 
 /** Fluxo homologado: receita oficial menos despesas totais oficiais. */
