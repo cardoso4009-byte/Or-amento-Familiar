@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowDownLeft, ArrowUpRight, BarChart3, FileSpreadsheet, PiggyBank, Upload, Wallet } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, BarChart3, FileSpreadsheet, Pencil, PiggyBank, Save, Upload, Wallet, X } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { MESES_2026 } from '../../lib/modelo-orcamento'
 
@@ -32,7 +32,7 @@ function Donut({ values, total, labels }: { values:number[]; total:number; label
   const colors=['#0f766e','#2b6f85','#65a9ad','#8a9aa0','#d5a14a']
   const parts=safe.map((v,i)=>{const end=start+v/sum*100;const p={label:labels[i],value:v,start,end,color:colors[i]};start=end;return p})
   const gradient=parts.map(p=>`${p.color} ${p.start}% ${p.end}%`).join(', ')
-  return <div className="donutWrap"><div className="donut" style={{background:`conic-gradient(${gradient})`}}><div className="donutHole"><strong>{moeda(total)}</strong><span>Total</span></div></div><div className="donutLegend">{parts.map(p=><div key={p.label}><span><i style={{background:p.color}}/>{p.label}</span><b>{sum?p.value/sum*100:0 .toFixed?.(0)}%</b></div>)}</div></div>
+  return <div className="donutWrap"><div className="donut" style={{background:`conic-gradient(${gradient})`}}><div className="donutHole"><strong>{moeda(total)}</strong><span>Total</span></div></div><div className="donutLegend">{parts.map(p=><div key={p.label}><span><i style={{background:p.color}}/>{p.label}</span><b>{(sum?p.value/sum*100:0).toFixed(0)}%</b></div>)}</div></div>
 }
 
 function LineChart({ values }: { values:number[] }) {
@@ -44,9 +44,11 @@ function LineChart({ values }: { values:number[] }) {
 export default function ControlePage() {
   const [dados, setDados] = useState<Dados>({})
   const [importado, setImportado] = useState(false)
+  const [editando, setEditando] = useState<string | null>(null)
+  const [rascunho, setRascunho] = useState<number[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   useEffect(() => { try { const salvo = localStorage.getItem(STORAGE_KEY); if (salvo) { setDados(JSON.parse(salvo)); setImportado(true) } } catch {} }, [])
-  async function importar(file?: File) { if (!file) return; try { const parsed = await parseArquivo(file); if (!Object.keys(parsed).length) throw new Error('Nenhum dado encontrado'); setDados(parsed); localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)); setImportado(true) } catch { alert('Não foi possível importar. Selecione o modelo Excel (.xlsx/.xls) ou CSV com Jan/26 até Dez/26.') } finally { if (inputRef.current) inputRef.current.value = '' } }
+  async function importar(file?: File) { if (!file) return; try { const parsed = await parseArquivo(file); if (!Object.keys(parsed).length) throw new Error('Nenhum dado encontrado'); setDados(parsed); localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)); setImportado(true); setEditando(null) } catch { alert('Não foi possível importar. Selecione o modelo Excel (.xlsx/.xls) ou CSV com Jan/26 até Dez/26.') } finally { if (inputRef.current) inputRef.current.value = '' } }
   const valor = (linha: string, i: number) => Number(dados[linha]?.[i] || 0)
   const receitaRows = [
     { label: 'Salários', key: 'Salários' },
@@ -59,11 +61,24 @@ export default function ControlePage() {
     { label: 'Despesas Fixas', key: 'Despesas Fixas' },
     { label: 'Bancos e Acordos', key: 'Bancos e Acordos' },
   ]
+  const fluxoRows = [
+    { label: 'Fluxo de Caixa', key: 'Fluxo de caixa' },
+    { label: 'Fluxo de Caixa do Período', key: 'Fluxo de Caixa do Período' },
+  ]
   const receitaMensal = meses.map((_,i)=>receitaRows.reduce((s,r)=>s+valor(r.key,i),0))
   const despesasMensal = meses.map((_,i)=>despesaRows.reduce((s,r)=>s+valor(r.key,i),0))
   const fluxoMensal = meses.map((_,i)=>valor('Fluxo de Caixa do Período',i))
   const anual = useMemo(() => ({ renda: receitaMensal.reduce((s,v)=>s+v,0), despesas: despesasMensal.reduce((s,v)=>s+v,0), fluxo: fluxoMensal.reduce((s,v)=>s+v,0) }), [dados])
   const taxaPoupanca = anual.renda > 0 ? anual.fluxo / anual.renda * 100 : 0
+  const editaveis = new Set([...receitaRows.map(r=>r.key), ...despesaRows.map(r=>r.key), ...fluxoRows.map(r=>r.key)])
+  function iniciarEdicao(key: string) { setEditando(key); setRascunho(meses.map((_,i)=>valor(key,i))) }
+  function alterarRascunho(index: number, raw: string) { setRascunho(prev => { const next=[...prev]; next[index]=normalizarValor(raw); return next }) }
+  function salvarEdicao() { if (!editando) return; const next={...dados,[editando]:rascunho}; setDados(next); localStorage.setItem(STORAGE_KEY,JSON.stringify(next)); setEditando(null); setRascunho([]) }
+  function cancelarEdicao() { setEditando(null); setRascunho([]) }
+  const celulas = (key: string, destaque=false) => meses.map((m,i)=> <td key={`${key}-${m}`} className={`border-t ${destaque?'border-t-2 border-slate-300 bg-slate-50':'border-slate-200'} px-3 py-3 text-right tabular-nums`}>
+    {editando===key ? <input aria-label={`${key} ${m}`} type="number" step="0.01" value={rascunho[i] ?? 0} onChange={e=>alterarRascunho(i,e.target.value)} className="w-[98px] rounded-md border border-slate-300 bg-white px-2 py-1 text-right text-xs outline-none focus:border-teal-600"/> : moeda(valor(key,i))}
+  </td>)
+  const linhaEditavel = (label:string,key:string,destaque=false) => <tr key={key}><td className={`sticky left-0 z-10 border-r ${destaque?'border-t-2 border-slate-300 bg-slate-50':'border-t border-slate-200 bg-white'} px-4 py-3 ${destaque?'font-bold text-slate-800':'pl-8 text-slate-600'}`}><div className="flex min-w-[250px] items-center justify-between gap-2"><span>{label}</span>{editando===key ? <span className="flex gap-1"><button type="button" title="Salvar" aria-label={`Salvar ${label}`} onClick={salvarEdicao} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',padding:'5px',border:0,borderRadius:6,background:'#0f766e',color:'#fff',cursor:'pointer'}}><Save size={13}/></button><button type="button" title="Cancelar" aria-label={`Cancelar ${label}`} onClick={cancelarEdicao} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',padding:'5px',border:'1px solid #d8e1e4',borderRadius:6,background:'#fff',color:'#60757d',cursor:'pointer'}}><X size={13}/></button></span> : <button type="button" title={`Editar ${label}`} aria-label={`Editar ${label}`} onClick={()=>iniciarEdicao(key)} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:4,padding:'5px 7px',border:'1px solid #cfe0df',borderRadius:6,background:'#f2f8f7',color:'#0f766e',cursor:'pointer',fontSize:10}}><Pencil size={12}/>Editar</button>}</div></td>{celulas(key,destaque)}</tr>
   return <div className="app">
     <aside className="sidebar"><div className="brand"><div className="brandMark">R$</div><div><strong>Orçamento</strong><span>Familiar</span></div></div><nav>{nav.map(n=>{const Icon=n.icon;return <Link key={n.href} href={n.href} className={n.href==='/controle'?'active':''}><Icon size={17}/>{n.label}</Link>})}</nav><div className="sideBottom"><small>VISÃO EXECUTIVA</small><p>Indicadores financeiros da família em uma visão simples e objetiva.</p></div></aside>
     <main className="content">
@@ -75,13 +90,13 @@ export default function ControlePage() {
       <section className="panel monthlyPanel"><div className="panelHead"><div><h2>Indicadores financeiros</h2><p>Meses sempre na horizontal para comparação direta.</p></div><div className="savingBadge">Taxa anual de poupança: <b>{taxaPoupanca.toFixed(1)}%</b></div></div>
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white"><table className="min-w-[1450px] w-full border-collapse text-sm"><thead><tr className="bg-slate-100"><th className="sticky left-0 z-20 min-w-[260px] border-b border-r border-slate-200 bg-slate-100 px-4 py-3 text-left font-semibold">Indicador</th>{meses.map(m=><th key={m} className="min-w-[105px] border-b border-slate-200 px-3 py-3 text-right font-semibold">{m}</th>)}</tr></thead><tbody>
           <tr><td className="sticky left-0 z-10 border-r border-t border-slate-200 bg-slate-50 px-4 py-3 font-bold text-slate-800">Salários e recebíveis</td>{meses.map((m,i)=><td key={`renda-${m}`} className="border-t border-slate-200 bg-slate-50 px-3 py-3 text-right font-bold tabular-nums">{moeda(receitaMensal[i])}</td>)}</tr>
-          {receitaRows.map(r=><tr key={r.label}><td className="sticky left-0 z-10 border-r border-t border-slate-200 bg-white px-4 py-3 pl-8 text-slate-600">{r.label}</td>{meses.map((m,i)=><td key={`${r.label}-${m}`} className="border-t border-slate-200 px-3 py-3 text-right tabular-nums">{moeda(valor(r.key,i))}</td>)}</tr>)}
+          {receitaRows.map(r=>linhaEditavel(r.label,r.key))}
           <tr><td className="sticky left-0 z-10 border-r border-t-2 border-slate-300 bg-slate-50 px-4 py-3 font-bold text-slate-800">Despesas Totais</td>{meses.map((m,i)=><td key={`desp-total-${m}`} className="border-t-2 border-slate-300 bg-slate-50 px-3 py-3 text-right font-bold tabular-nums">{moeda(despesasMensal[i])}</td>)}</tr>
-          {despesaRows.map(r=><tr key={r.label}><td className="sticky left-0 z-10 border-r border-t border-slate-200 bg-white px-4 py-3 pl-8 text-slate-600">{r.label}</td>{meses.map((m,i)=><td key={`${r.label}-${m}`} className="border-t border-slate-200 px-3 py-3 text-right tabular-nums">{moeda(valor(r.key,i))}</td>)}</tr>)}
-          <tr><td className="sticky left-0 z-10 border-r border-t-2 border-slate-300 bg-slate-50 px-4 py-3 font-bold text-slate-800">Fluxo de Caixa</td>{meses.map((m,i)=><td key={`fluxo-${m}`} className="border-t-2 border-slate-300 bg-slate-50 px-3 py-3 text-right font-bold tabular-nums">{moeda(valor('Fluxo de caixa',i))}</td>)}</tr>
-          <tr><td className="sticky left-0 z-10 border-r border-t border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700">Fluxo de Caixa do Período</td>{meses.map((m,i)=><td key={`periodo-${m}`} className="border-t border-slate-200 px-3 py-3 text-right font-semibold tabular-nums">{moeda(fluxoMensal[i])}</td>)}</tr>
-          <tr><td className="sticky left-0 z-10 border-r border-t border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700">Comprometimento da Renda</td>{meses.map((m,i)=>{const v=receitaMensal[i]>0?despesasMensal[i]/receitaMensal[i]*100:0;return <td key={`comp-${m}`} className="border-t border-slate-200 px-3 py-3 text-right tabular-nums">{v?`${v.toFixed(1)}%`:'—'}</td>})}</tr>
+          {despesaRows.map(r=>linhaEditavel(r.label,r.key))}
+          {fluxoRows.map(r=>linhaEditavel(r.label,r.key,r.key==='Fluxo de caixa'))}
+          <tr><td className="sticky left-0 z-10 border-r border-t border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700">Comprometimento da Renda</td>{meses.map((m,i)=>{const renda=receitaMensal[i], desp=despesasMensal[i], v=renda>0?desp/renda*100:0;return <td key={`comp-${m}`} className="border-t border-slate-200 px-3 py-3 text-right tabular-nums">{v?`${v.toFixed(1)}%`:'—'}</td>})}</tr>
         </tbody></table></div>
+        <div style={{marginTop:10,fontSize:10,color:'#82959b'}}>As linhas detalhadas podem ser ajustadas manualmente. Os subtotais de Salários e Recebíveis e Despesas Totais são recalculados automaticamente.</div>
       </section>
       <section className="panel"><div className="panelHead"><div><h2>Análise detalhada</h2><p>Conta, fornecedor, categoria e lançamento ficam na segunda tela.</p></div><Link className="primary" href="/lancamentos">Abrir lançamentos →</Link></div></section>
     </main>
