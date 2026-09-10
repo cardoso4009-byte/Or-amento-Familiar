@@ -38,6 +38,10 @@ function moeda(value: number) {
   return value === 0 ? '—' : value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
+function numero(value: number) {
+  return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
 export default function HomologacaoPage() {
   const [mesSelecionado, setMesSelecionado] = useState('Set/26')
   const [dados, setDados] = useState<Dados>(() => {
@@ -46,6 +50,22 @@ export default function HomologacaoPage() {
   })
   const inputRef = useRef<HTMLInputElement>(null)
   const colunas = useMemo(() => meses.map((mes) => ({ mes })), [])
+
+  const validacao = useMemo(() => meses.map((mes, i) => {
+    const rendaCalculada = ['Salários','Férias','13º Salário','Bônus','IR / Dissídio'].reduce((s, key) => s + (dados[key]?.[i] || 0), 0)
+    const despesasCalculadas = (dados['Despesas Fixas']?.[i] || 0) + (dados['Bancos e Acordos']?.[i] || 0)
+    const rendaOficial = dados['Renda Familiar']?.[i] || 0
+    const despesasOficiais = dados['Despesas Totais']?.[i] || 0
+    const fluxoOficial = dados['Fluxo de Caixa do Período']?.[i] || 0
+    const diferencaRenda = rendaCalculada - rendaOficial
+    const diferencaDespesas = despesasCalculadas - despesasOficiais
+    const fluxoCalculado = rendaOficial - despesasOficiais
+    const diferencaFluxo = fluxoCalculado - fluxoOficial
+    return { mes, rendaCalculada, rendaOficial, diferencaRenda, despesasCalculadas, despesasOficiais, diferencaDespesas, fluxoCalculado, fluxoOficial, diferencaFluxo }
+  }), [dados])
+
+  const mesAtual = validacao[meses.indexOf(mesSelecionado)]
+  const pendencias = validacao.reduce((total, v) => total + (Math.abs(v.diferencaRenda) > 0.01 || Math.abs(v.diferencaDespesas) > 0.01 || Math.abs(v.diferencaFluxo) > 0.01 ? 1 : 0), 0)
 
   async function importar(file?: File) {
     if (!file) return
@@ -65,7 +85,7 @@ export default function HomologacaoPage() {
           <div>
             <p className="text-sm font-medium text-slate-500">Orçamento Familiar</p>
             <h1 className="text-2xl font-bold">Homologação 2026</h1>
-            <p className="mt-1 text-sm text-slate-500">Estrutura oficial: meses na horizontal e receitas, despesas e resultado na vertical.</p>
+            <p className="mt-1 text-sm text-slate-500">Conferência das regras financeiras antes de considerar o Dashboard homologado.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <button onClick={() => inputRef.current?.click()} className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white">Importar CSV</button>
@@ -77,24 +97,56 @@ export default function HomologacaoPage() {
           </div>
         </div>
 
+        <section className="mb-4 grid gap-3 md:grid-cols-3">
+          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Salários e recebíveis</p>
+            <div className="mt-2 flex items-end justify-between gap-3"><strong className="text-lg">{moeda(mesAtual.rendaCalculada)}</strong><span className={`text-xs font-semibold ${Math.abs(mesAtual.diferencaRenda) < 0.01 ? 'text-emerald-700' : 'text-amber-700'}`}>{Math.abs(mesAtual.diferencaRenda) < 0.01 ? '✓ OK' : `Diferença ${moeda(mesAtual.diferencaRenda)}`}</span></div>
+            <p className="mt-1 text-xs text-slate-500">Soma de Salários + Férias + 13º + Bônus + IR / Dissídio</p>
+          </article>
+          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Despesas Totais</p>
+            <div className="mt-2 flex items-end justify-between gap-3"><strong className="text-lg">{moeda(mesAtual.despesasCalculadas)}</strong><span className={`text-xs font-semibold ${Math.abs(mesAtual.diferencaDespesas) < 0.01 ? 'text-emerald-700' : 'text-amber-700'}`}>{Math.abs(mesAtual.diferencaDespesas) < 0.01 ? '✓ OK' : `Diferença ${moeda(mesAtual.diferencaDespesas)}`}</span></div>
+            <p className="mt-1 text-xs text-slate-500">Despesas Fixas + Bancos e Acordos</p>
+          </article>
+          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Fluxo de Caixa do Período</p>
+            <div className="mt-2 flex items-end justify-between gap-3"><strong className="text-lg">{moeda(mesAtual.fluxoCalculado)}</strong><span className={`text-xs font-semibold ${Math.abs(mesAtual.diferencaFluxo) < 0.01 ? 'text-emerald-700' : 'text-amber-700'}`}>{Math.abs(mesAtual.diferencaFluxo) < 0.01 ? '✓ OK' : `Diferença ${moeda(mesAtual.diferencaFluxo)}`}</span></div>
+            <p className="mt-1 text-xs text-slate-500">Renda Familiar − Despesas Totais</p>
+          </article>
+        </section>
+
+        <div className={`mb-4 rounded-xl border p-4 text-sm ${pendencias === 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
+          <strong>{pendencias === 0 ? 'Homologação consistente' : `${pendencias} mês(es) com diferença a conferir`}</strong>
+          <p className="mt-1 text-xs">As diferenças são apenas sinalizadas. Nenhum valor oficial é alterado ou reconciliado automaticamente.</p>
+        </div>
+
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
           <table className="min-w-[1500px] w-full border-collapse text-sm">
-            <thead><tr className="bg-slate-100">
-              <th className="sticky left-0 z-20 min-w-[270px] border-b border-r border-slate-200 bg-slate-100 px-4 py-3 text-left font-semibold">Orçamento Familiar</th>
-              {colunas.map(({ mes }) => <th key={mes} className={`min-w-[105px] border-b border-slate-200 px-3 py-3 text-right font-semibold ${mes === mesSelecionado ? 'bg-slate-200' : ''}`}>{mes}</th>)}
+            <thead><tr className="bg-slate-900 text-white">
+              <th className="sticky left-0 z-20 min-w-[270px] border-b border-r border-slate-700 bg-slate-900 px-4 py-3 text-left font-semibold">Orçamento Familiar</th>
+              {colunas.map(({ mes }) => <th key={mes} className={`min-w-[105px] border-b border-slate-700 px-3 py-3 text-right font-semibold ${mes === mesSelecionado ? 'bg-slate-700' : ''}`}>{mes}</th>)}
             </tr></thead>
             <tbody>
               {linhas.map((linha) => {
                 const destaque = ['RECEITAS','DESPESAS','RESULTADO'].includes(linha)
                 const total = ['Salários e recebíveis','Renda Familiar','Despesas Totais','Despesas Fixas','Bancos e Acordos','Despesas Diversas','Fluxo de caixa','Fluxo de Caixa do Período'].includes(linha)
+                const detalhe = !destaque && !total
                 const valores = dados[linha]
                 return <tr key={linha} className={destaque ? 'bg-slate-100' : ''}>
-                  <td className={`sticky left-0 z-10 border-r border-t border-slate-200 px-4 py-2 ${destaque ? 'bg-slate-100 font-bold text-slate-800' : total ? 'bg-white font-semibold text-slate-800' : 'bg-white text-slate-600'}`}>{linha}</td>
+                  <td className={`sticky left-0 z-10 border-r border-t border-slate-200 px-4 py-2 ${destaque ? 'bg-slate-100 font-bold text-slate-800' : total ? 'bg-white font-semibold text-slate-800' : 'bg-white text-slate-600'} ${detalhe ? 'pl-9' : ''}`}>{linha}</td>
                   {meses.map((mes, i) => <td key={`${linha}-${mes}`} className={`border-t border-slate-200 px-3 py-2 text-right tabular-nums ${mes === mesSelecionado ? 'bg-slate-50' : ''} ${destaque ? 'font-bold' : total ? 'font-semibold' : ''}`}>{valores ? moeda(valores[i]) : ''}</td>)}
                 </tr>
               })}
             </tbody>
           </table>
+        </div>
+
+        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600 shadow-sm">
+          <div className="grid gap-2 md:grid-cols-3">
+            <div><strong className="text-slate-800">{mesSelecionado}</strong><br />Renda calculada: {numero(mesAtual.rendaCalculada)} · Oficial: {numero(mesAtual.rendaOficial)}</div>
+            <div><strong className="text-slate-800">Despesas</strong><br />Calculadas: {numero(mesAtual.despesasCalculadas)} · Oficiais: {numero(mesAtual.despesasOficiais)}</div>
+            <div><strong className="text-slate-800">Fluxo do período</strong><br />Calculado: {numero(mesAtual.fluxoCalculado)} · Oficial: {numero(mesAtual.fluxoOficial)}</div>
+          </div>
         </div>
 
         <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
