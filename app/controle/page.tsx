@@ -19,7 +19,7 @@ const nav = [
 ]
 function normalizarValor(raw: unknown): number { if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0; let t = String(raw ?? '').trim().replace(/R\$\s?/gi, ''); if (!t) return 0; if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.'); const n = Number(t); return Number.isFinite(n) ? n : 0 }
 function parseRows(rows: unknown[][]): Dados { const result: Dados = {}; const header = (rows[0] || []).map(v => String(v ?? '').trim()); const indices = meses.map(m => header.findIndex(h => h === m)); rows.slice(1).forEach(row => { const label = String(row?.[0] ?? '').trim(); if (!label || label === 'Categoria') return; result[label] = indices.map(i => i < 0 ? 0 : normalizarValor(row?.[i])); }); return result }
-function parseCsv(text: string): Dados { const rows = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/).map(line => { const d = line.includes(';') ? ';' : ','; return line.split(d).map(v => v.trim().replace(/^"|"$/g, '')) }); return parseRows(rows) }
+function parseCsv(text: string): Dados { const rows = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/).map(line => { const d = line.includes(';') ? ';' : ','; return line.split(d).map(v => v.trim().replace(/^\"|\"$/g, '')) }); return parseRows(rows) }
 async function parseArquivo(file: File): Promise<Dados> { const ext = file.name.toLowerCase().split('.').pop(); if (ext === 'xlsx' || ext === 'xls') { const buffer = await file.arrayBuffer(); const wb = XLSX.read(buffer, { type: 'array', cellDates: false }); const sheet = wb.Sheets[wb.SheetNames[0]]; if (!sheet) throw new Error('Planilha sem aba válida'); return parseRows(XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as unknown[][]) } if (ext === 'csv') return parseCsv(await file.text()); throw new Error('Formato não suportado') }
 
 export default function ControlePage() {
@@ -30,15 +30,19 @@ export default function ControlePage() {
   async function importar(file?: File) { if (!file) return; try { const parsed = await parseArquivo(file); if (!Object.keys(parsed).length) throw new Error('Nenhum dado encontrado'); setDados(parsed); localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)); setImportado(true) } catch { alert('Não foi possível importar. Selecione o modelo Excel (.xlsx/.xls) ou CSV com Jan/26 até Dez/26.') } finally { if (inputRef.current) inputRef.current.value = '' } }
   const valor = (linha: string, i: number) => Number(dados[linha]?.[i] || 0)
   const anual = useMemo(() => ({ renda: meses.reduce((s, _, i) => s + valor('Renda Familiar', i), 0), despesas: meses.reduce((s, _, i) => s + valor('Despesas Totais', i), 0), fluxo: meses.reduce((s, _, i) => s + valor('Fluxo de Caixa do Período', i), 0) }), [dados])
+  const receitaRows = [
+    { label: 'Salários', key: 'Salários' },
+    { label: 'Férias', key: 'Férias' },
+    { label: '13º Salário', key: '13º Salário' },
+    { label: 'Bônus', key: 'Bônus' },
+    { label: 'IR / Dissídio', key: 'IR / Dissídio' },
+  ]
   const rows = [
-    { label: 'Receita Familiar', key: 'Renda Familiar', type: 'money' },
     { label: 'Despesas', key: 'Despesas Totais', type: 'money' },
     { label: 'Fluxo de Caixa', key: 'Fluxo de Caixa do Período', type: 'money' },
     { label: 'Comprometimento da Renda', key: 'comprometimento', type: 'percent' },
   ]
   const extraRows = [
-    { label: 'Receita Léo', fn: (i:number) => valor('Salários - Léo',i)+valor('Férias - Léo',i)+valor('13º - Léo',i)+valor('Bônus - Léo',i)+valor('IR / Dissídio - Léo',i) },
-    { label: 'Receita Nat', fn: (i:number) => valor('Salários - Nat',i)+valor('Férias - Nat',i)+valor('13º - Nat',i)+valor('Bônus - Nat',i)+valor('IR / Dissídio - Nat',i) },
     { label: 'Despesas Fixas', fn: (i:number) => valor('Despesas Fixas',i) },
     { label: 'Despesas Diversas', fn: (i:number) => valor('Despesas Diversas',i) },
   ]
@@ -50,6 +54,8 @@ export default function ControlePage() {
       <section className="cards controlCards"><article><div className="cardIcon income"><ArrowDownLeft size={19}/></div><div><span>Receita Familiar · 2026</span><strong>{moeda(anual.renda)}</strong><small>Léo + Nat</small></div></article><article><div className="cardIcon expense"><ArrowUpRight size={19}/></div><div><span>Despesas · 2026</span><strong>{moeda(anual.despesas)}</strong><small>Despesas totais</small></div></article><article><div className="cardIcon balance"><ArrowDownLeft size={19}/></div><div><span>Fluxo de Caixa · 2026</span><strong>{moeda(anual.fluxo)}</strong><small>Resultado acumulado</small></div></article></section>
       <section className="panel monthlyPanel"><div className="panelHead"><div><h2>Indicadores financeiros</h2><p>Meses sempre na horizontal para comparação direta.</p></div></div>
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white"><table className="min-w-[1450px] w-full border-collapse text-sm"><thead><tr className="bg-slate-100"><th className="sticky left-0 z-20 min-w-[260px] border-b border-r border-slate-200 bg-slate-100 px-4 py-3 text-left font-semibold">Indicador</th>{meses.map(m=><th key={m} className="min-w-[105px] border-b border-slate-200 px-3 py-3 text-right font-semibold">{m}</th>)}</tr></thead><tbody>
+          <tr><td className="sticky left-0 z-10 border-r border-t border-slate-200 bg-slate-50 px-4 py-3 font-bold text-slate-800">Salários e recebíveis</td>{meses.map((m,i)=><td key={`renda-${m}`} className="border-t border-slate-200 bg-slate-50 px-3 py-3 text-right font-bold tabular-nums">{moeda(valor('Renda Familiar',i))}</td>)}</tr>
+          {receitaRows.map(r=><tr key={r.label}><td className="sticky left-0 z-10 border-r border-t border-slate-200 bg-white px-4 py-3 pl-8 text-slate-600">{r.label}</td>{meses.map((m,i)=><td key={`${r.label}-${m}`} className="border-t border-slate-200 px-3 py-3 text-right tabular-nums">{moeda(valor(r.key,i))}</td>)}</tr>)}
           {rows.map(r=><tr key={r.label}><td className="sticky left-0 z-10 border-r border-t border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700">{r.label}</td>{meses.map((m,i)=>{const renda=valor('Renda Familiar',i), desp=valor('Despesas Totais',i), v=r.type==='percent'?(renda>0?desp/renda*100:0):valor(r.key,i);return <td key={`${r.label}-${m}`} className="border-t border-slate-200 px-3 py-3 text-right tabular-nums">{r.type==='percent'?(v?`${v.toFixed(1)}%`:'—'):moeda(v)}</td>})}</tr>)}
           {extraRows.map(r=><tr key={r.label}><td className="sticky left-0 z-10 border-r border-t border-slate-200 bg-white px-4 py-3 text-slate-600">{r.label}</td>{meses.map((m,i)=><td key={`${r.label}-${m}`} className="border-t border-slate-200 px-3 py-3 text-right tabular-nums">{moeda(r.fn(i))}</td>)}</tr>)}
         </tbody></table></div>
