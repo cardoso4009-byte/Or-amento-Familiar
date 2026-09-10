@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
-import { ArrowDownLeft, BarChart3, CalendarDays, FileSpreadsheet, PiggyBank, Wallet } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { ArrowDownLeft, BarChart3, CalendarDays, FileSpreadsheet, PiggyBank, Upload, Wallet } from 'lucide-react'
 import { MESES_2026 } from '../../lib/modelo-orcamento'
 
 const meses = [...MESES_2026]
+const STORAGE_KEY = 'orcamento-familiar-homologacao-2026'
 const moeda = (v: number) => v === 0 ? '—' : v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const nav = [
   { href: '/controle', label: 'Controle', icon: BarChart3 },
@@ -23,13 +24,50 @@ const grupos = [
 
 type Dados = Record<string, number[]>
 
+function parseCsv(text: string): Dados {
+  const result: Dados = {}
+  const rows = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/)
+  if (!rows.length) throw new Error('CSV vazio')
+  const split = (line: string) => line.includes(';') ? line.split(';') : line.split(',')
+  const header = split(rows[0]).map(v => v.trim().replace(/^"|"$/g, ''))
+  const indices = meses.map(m => header.findIndex(h => h === m))
+  rows.slice(1).forEach(line => {
+    const row = split(line).map(v => v.trim().replace(/^"|"$/g, ''))
+    const label = row[0]
+    if (!label) return
+    result[label] = indices.map(idx => {
+      if (idx < 0) return 0
+      let raw = (row[idx + 1] ?? '').replace(/R\$\s?/g, '').trim()
+      if (raw.includes(',')) raw = raw.replace(/\./g, '').replace(',', '.')
+      const value = Number(raw)
+      return Number.isFinite(value) ? value : 0
+    })
+  })
+  return result
+}
+
 export default function ControlePage() {
   const [mes, setMes] = useState<(typeof MESES_2026)[number]>('Set/26')
   const [dados, setDados] = useState<Dados>({})
+  const [importado, setImportado] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    try { setDados(JSON.parse(localStorage.getItem('orcamento-familiar-homologacao-2026') || '{}')) } catch { setDados({}) }
+    try {
+      const salvo = localStorage.getItem(STORAGE_KEY)
+      if (salvo) { setDados(JSON.parse(salvo)); setImportado(true) }
+    } catch { setDados({}) }
   }, [])
+
+  async function importar(file?: File) {
+    if (!file) return
+    try {
+      const parsed = parseCsv(await file.text())
+      setDados(parsed)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
+      setImportado(true)
+    } catch { alert('Não foi possível ler a base. Use o CSV com Jan/26 até Dez/26.') }
+  }
 
   const indice = Math.max(0, meses.indexOf(mes))
   const valor = (linha: string, i = indice) => Number(dados[linha]?.[i] || 0)
@@ -53,8 +91,14 @@ export default function ControlePage() {
     <main className="content">
       <header className="top">
         <div><p className="eyebrow">ORÇAMENTO FAMILIAR</p><h1>Controle financeiro</h1><p className="muted">Visão consolidada da família · {mes}</p></div>
-        <div className="topActions"><div className="month controlMonth"><CalendarDays size={16}/><select value={mes} onChange={e => setMes(e.target.value as typeof mes)}>{meses.map(m => <option key={m}>{m}</option>)}</select></div><Link href="/homologacao" className="statusPill">Base homologada</Link></div>
+        <div className="topActions">
+          <div className="month controlMonth"><CalendarDays size={16}/><select value={mes} onChange={e => setMes(e.target.value as typeof mes)}>{meses.map(m => <option key={m}>{m}</option>)}</select></div>
+          <button className="statusPill" onClick={() => inputRef.current?.click()}><Upload size={14}/>{importado ? 'Atualizar base' : 'Carregar base real'}</button>
+          <input ref={inputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={e => importar(e.target.files?.[0])} />
+        </div>
       </header>
+
+      {!importado && <section className="panel" style={{ marginBottom: 18 }}><div className="panelHead"><div><h2>Base financeira ainda não carregada</h2><p>Na produção, os valores reais ficam somente no navegador e não são publicados no GitHub.</p></div><button className="primary" onClick={() => inputRef.current?.click()}><Upload size={16}/>Importar CSV</button></div></section>}
 
       <section className="cards controlCards">
         <article><div className="cardIcon income"><ArrowDownLeft size={19}/></div><div><span>Renda familiar</span><strong>{moeda(renda)}</strong><small>Léo + Nat</small></div></article>
@@ -69,22 +113,8 @@ export default function ControlePage() {
         </div>
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="min-w-[1500px] w-full border-collapse text-sm">
-            <thead><tr className="bg-slate-100">
-              <th className="sticky left-0 z-20 min-w-[270px] border-b border-r border-slate-200 bg-slate-100 px-4 py-3 text-left font-semibold">Orçamento Familiar</th>
-              {meses.map(m => <th key={m} className={`min-w-[105px] border-b border-slate-200 px-3 py-3 text-right font-semibold ${m === mes ? 'bg-slate-200' : ''}`}>{m}</th>)}
-            </tr></thead>
-            <tbody>
-              {grupos.map(grupo => <>
-                <tr key={grupo.titulo} className="bg-slate-200"><td colSpan={13} className="sticky left-0 border-t border-slate-300 px-4 py-2 font-bold text-slate-800">{grupo.titulo}</td></tr>
-                {grupo.linhas.map(linha => {
-                  const destaque = ['Salários e recebíveis','Renda Familiar','Despesas Totais','Despesas Fixas','Bancos e Acordos','Despesas Diversas','Fluxo de caixa','Fluxo de Caixa do Período'].includes(linha)
-                  return <tr key={linha}>
-                    <td className={`sticky left-0 z-10 border-r border-t border-slate-200 bg-white px-4 py-2 ${destaque ? 'font-semibold text-slate-800' : 'text-slate-600'}`}>{linha}</td>
-                    {meses.map((m, i) => <td key={`${linha}-${m}`} className={`border-t border-slate-200 px-3 py-2 text-right tabular-nums ${m === mes ? 'bg-slate-50' : ''} ${destaque ? 'font-semibold' : ''}`}>{moeda(valor(linha, i))}</td>)}
-                  </tr>
-                })}
-              </>)}
-            </tbody>
+            <thead><tr className="bg-slate-100"><th className="sticky left-0 z-20 min-w-[270px] border-b border-r border-slate-200 bg-slate-100 px-4 py-3 text-left font-semibold">Orçamento Familiar</th>{meses.map(m => <th key={m} className={`min-w-[105px] border-b border-slate-200 px-3 py-3 text-right font-semibold ${m === mes ? 'bg-slate-200' : ''}`}>{m}</th>)}</tr></thead>
+            <tbody>{grupos.map(grupo => <tbody key={grupo.titulo}><tr className="bg-slate-200"><td colSpan={13} className="border-t border-slate-300 px-4 py-2 font-bold text-slate-800">{grupo.titulo}</td></tr>{grupo.linhas.map(linha => { const destaque = ['Salários e recebíveis','Renda Familiar','Despesas Totais','Despesas Fixas','Bancos e Acordos','Despesas Diversas','Fluxo de caixa','Fluxo de Caixa do Período'].includes(linha); return <tr key={linha}><td className={`sticky left-0 z-10 border-r border-t border-slate-200 bg-white px-4 py-2 ${destaque ? 'font-semibold text-slate-800' : 'text-slate-600'}`}>{linha}</td>{meses.map((m, i) => <td key={`${linha}-${m}`} className={`border-t border-slate-200 px-3 py-2 text-right tabular-nums ${m === mes ? 'bg-slate-50' : ''} ${destaque ? 'font-semibold' : ''}`}>{moeda(valor(linha, i))}</td>)}</tr>})}</tbody>)}</tbody>
           </table>
         </div>
       </section>
