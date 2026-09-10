@@ -5,8 +5,8 @@ import { useMemo, useRef, useState } from 'react'
 const meses = ['Jan/26','Fev/26','Mar/26','Abr/26','Mai/26','Jun/26','Jul/26','Ago/26','Set/26','Out/26','Nov/26','Dez/26']
 
 const linhas = [
-  'RECEITAS','Salários','Salários - Léo','Salários - Nat','Férias','Férias - Léo','Férias - Nat','13º Salário','13º - Léo','13º - Nat','Bônus','Bônus - Léo','Bônus - Nat','IR / Dissídio','IR / Dissídio - Léo','IR / Dissídio - Nat','Renda Familiar',
-  'DESPESAS','Despesas Fixas','Bancos e Acordos','Despesas Totais','Despesas Diversas','RESULTADO','Fluxo de Caixa do Período',
+  'RECEITAS','Salários e recebíveis','Salários','Salários - Léo','Salários - Nat','Férias','Férias - Léo','Férias - Nat','13º Salário','13º - Léo','13º - Nat','Bônus','Bônus - Léo','Bônus - Nat','IR / Dissídio','IR / Dissídio - Léo','IR / Dissídio - Nat','Renda Familiar',
+  'DESPESAS','Despesas Totais','Despesas Fixas','Claro Residencial 08','Claro Família - 10','CEG - 15','Light - 17','Cartão de Crédito Nat - 10','Cartão de Crédito Léo - 10','Financiamento Apto - 10','Seguro Apto - 21','Seguro de Vida','Localiza - 21','Nadi - 05','Condomínio - 10','Psicóloga','Escola - 10','Bancos e Acordos','Financiamento Mobi - 15','IPTU 01/019189/2023-24 - 10','IPTU','Acordo Santander - Léo 27','Acordo Santander - Nat 23','Despesas Diversas','RESULTADO','Fluxo de caixa','Fluxo de Caixa do Período',
 ]
 
 type Dados = Record<string, number[]>
@@ -33,7 +33,7 @@ function parseCsv(text: string): Dados {
 }
 
 function moeda(value: number) {
-  return value === 0 ? '—' : value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+  return value === 0 ? '—' : value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 export default function HomologacaoPage() {
@@ -58,12 +58,12 @@ export default function HomologacaoPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 p-4 text-slate-900 md:p-8">
-      <div className="mx-auto max-w-[1500px]">
+      <div className="mx-auto max-w-[1700px]">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm font-medium text-slate-500">Orçamento Familiar</p>
             <h1 className="text-2xl font-bold">Homologação 2026</h1>
-            <p className="mt-1 text-sm text-slate-500">Meses na horizontal e receitas, despesas e resultado na vertical.</p>
+            <p className="mt-1 text-sm text-slate-500">Estrutura oficial: meses na horizontal e receitas, despesas e resultado na vertical.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <button onClick={() => inputRef.current?.click()} className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white">Importar CSV</button>
@@ -76,18 +76,18 @@ export default function HomologacaoPage() {
         </div>
 
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="min-w-[1250px] w-full border-collapse text-sm">
+          <table className="min-w-[1500px] w-full border-collapse text-sm">
             <thead><tr className="bg-slate-100">
-              <th className="sticky left-0 z-20 min-w-[220px] border-b border-r border-slate-200 bg-slate-100 px-4 py-3 text-left font-semibold">Categoria / Conta</th>
-              {colunas.map(({ mes }) => <th key={mes} className={`min-w-[100px] border-b border-slate-200 px-3 py-3 text-right font-semibold ${mes === mesSelecionado ? 'bg-slate-200' : ''}`}>{mes}</th>)}
+              <th className="sticky left-0 z-20 min-w-[270px] border-b border-r border-slate-200 bg-slate-100 px-4 py-3 text-left font-semibold">Orçamento Familiar</th>
+              {colunas.map(({ mes }) => <th key={mes} className={`min-w-[105px] border-b border-slate-200 px-3 py-3 text-right font-semibold ${mes === mesSelecionado ? 'bg-slate-200' : ''}`}>{mes}</th>)}
             </tr></thead>
             <tbody>
               {linhas.map((linha) => {
                 const destaque = ['RECEITAS','DESPESAS','RESULTADO'].includes(linha)
-                const total = ['Renda Familiar','Despesas Totais','Fluxo de Caixa do Período'].includes(linha)
+                const total = ['Salários e recebíveis','Renda Familiar','Despesas Totais','Despesas Fixas','Bancos e Acordos','Despesas Diversas','Fluxo de caixa','Fluxo de Caixa do Período'].includes(linha)
                 const valores = dados[linha]
-                return <tr key={linha} className={destaque ? 'bg-slate-50' : ''}>
-                  <td className={`sticky left-0 z-10 border-r border-t border-slate-200 px-4 py-2 ${destaque ? 'bg-slate-50 font-bold' : total ? 'bg-white font-semibold' : 'bg-white text-slate-600'}`}>{linha}</td>
+                return <tr key={linha} className={destaque ? 'bg-slate-100' : ''}>
+                  <td className={`sticky left-0 z-10 border-r border-t border-slate-200 px-4 py-2 ${destaque ? 'bg-slate-100 font-bold text-slate-800' : total ? 'bg-white font-semibold text-slate-800' : 'bg-white text-slate-600'}`}>{linha}</td>
                   {meses.map((mes, i) => <td key={`${linha}-${mes}`} className={`border-t border-slate-200 px-3 py-2 text-right tabular-nums ${mes === mesSelecionado ? 'bg-slate-50' : ''} ${destaque ? 'font-bold' : total ? 'font-semibold' : ''}`}>{valores ? moeda(valores[i]) : ''}</td>)}
                 </tr>
               })}
