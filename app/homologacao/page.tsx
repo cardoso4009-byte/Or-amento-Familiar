@@ -15,7 +15,9 @@ const vazio: Dados = Object.fromEntries(vazias.map((x) => [x, Array(12).fill(0)]
 
 function parseCsv(text: string): Dados {
   const result: Dados = JSON.parse(JSON.stringify(vazio))
-  const rows = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/).map((line) => line.split(',').map((v) => v.trim().replace(/^"|"$/g, '')))
+  const clean = text.replace(/^\uFEFF/, '').trim()
+  const delimiter = clean.includes(';') ? ';' : '\t'
+  const rows = clean.split(/\r?\n/).map((line) => line.split(delimiter).map((v) => v.trim().replace(/^"|"$/g, '')))
   if (rows.length < 2) throw new Error('CSV vazio.')
   const header = rows[0].slice(1)
   const indexes = meses.map((m) => header.findIndex((h) => h === m))
@@ -52,7 +54,7 @@ export default function HomologacaoPage() {
       setDados(parsed)
       localStorage.setItem('orcamento-familiar-homologacao-2026', JSON.stringify(parsed))
     } catch {
-      alert('Não foi possível ler o CSV. Use o modelo com as colunas Jan/26 até Dez/26.')
+      alert('Não foi possível ler a base. Use o arquivo com as colunas Jan/26 até Dez/26 e separador ;.')
     }
   }
 
@@ -97,7 +99,7 @@ export default function HomologacaoPage() {
 
         <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           <strong>Dados reais protegidos</strong>
-          <p className="mt-1">O CSV é lido no navegador e salvo somente no armazenamento local deste dispositivo. Os valores reais não são gravados no código público do GitHub.</p>
+          <p className="mt-1">A base é lida no navegador e salva somente no armazenamento local deste dispositivo. Os valores reais não são gravados no código público do GitHub.</p>
         </div>
       </div>
     </main>
