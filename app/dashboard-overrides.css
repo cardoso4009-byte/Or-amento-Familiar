@@ -1,0 +1,16 @@
+/* Ajuste fino do Dashboard — colunas uniformes e linhas mais compactas */
+.monthlyTableWrap{overflow-x:auto}
+.monthlyTable{table-layout:fixed;min-width:1564px;width:100%}
+.monthlyTable th,.monthlyTable td{padding-left:8px;padding-right:8px}
+.monthlyTable th{height:42px;font-size:10px}
+.monthlyTable td{height:38px;font-size:11px}
+.monthlyTable .indicatorHeader,.monthlyTable .detailLabel,.monthlyTable .sectionLabel{width:330px;min-width:330px}
+.monthlyTable th:not(:first-child):not(.actionsHeader),.monthlyTable td:not(:first-child):not(.actionCell):not(.sectionAction){width:92px;min-width:92px;max-width:92px}
+.monthlyTable .actionsHeader,.monthlyTable .actionCell,.monthlyTable .sectionAction{width:130px;min-width:130px;max-width:130px}
+.monthlyTable .detailLabel{padding-left:52px;font-size:13px}
+.monthlyTable .sectionLabel{gap:14px;padding-left:17px;font-size:15px}
+.monthlyTable .sectionRow td{height:48px;font-size:13px}
+.monthlyTable .editButton{min-width:88px;padding:6px 10px;font-size:11px}
+.monthlyTable .monthlyCell input{width:82px;padding:5px 6px;font-size:10px}
+.monthlyTable .sectionAction,.monthlyTable .actionCell{padding-left:8px!important;padding-right:8px!important}
+.tableNote{margin-top:9px}
