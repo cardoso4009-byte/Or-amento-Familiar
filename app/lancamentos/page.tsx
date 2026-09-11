@@ -14,6 +14,27 @@ type Lancamento={id:string;mes:string;conta:string;natureza:Natureza;categoria:s
 const moeda=(v:number)=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2,maximumFractionDigits:2})
 const STORAGE='orcamento-familiar-lancamentos-2026'
 
+function normalizarValor(raw:string){
+  let texto=raw.replace(/[^0-9,.-]/g,'')
+  if(texto.includes(',')){
+    texto=texto.replace(/\./g,'')
+    const partes=texto.split(',')
+    texto=`${partes.shift()||''},${partes.join('').slice(0,2)}`
+  }else if((texto.match(/\./g)||[]).length>1){
+    const partes=texto.split('.')
+    texto=`${partes.slice(0,-1).join('')}.${partes.at(-1)?.slice(0,2)||''}`
+  }else if(texto.includes('.')){
+    const [inteiro,decimais='']=texto.split('.')
+    texto=`${inteiro}.${decimais.slice(0,2)}`
+  }
+  return texto
+}
+function converterValor(raw:string){
+  const texto=raw.replace(/\./g,'').replace(',','.')
+  const n=Number(texto)
+  return Number.isFinite(n)?Math.round(n*100)/100:0
+}
+
 export default function LancamentosPage(){
   const [mes,setMes]=useState<(typeof MESES_2026)[number]>('Set/26')
   const [conta,setConta]=useState<string>('Conta Corrente')
@@ -33,7 +54,7 @@ export default function LancamentosPage(){
 
   function salvar(e:FormEvent){
     e.preventDefault()
-    const n=Number(valor.replace(/\./g,'').replace(',','.'))
+    const n=converterValor(valor)
     if(!descricao.trim()||!Number.isFinite(n)||n<=0||(natureza==='Transferência'&&!contaDestino))return
     const novo:Lancamento={id:crypto.randomUUID(),mes,conta,natureza,categoria:categoria.trim()||'Sem categoria',descricao:descricao.trim(),valor:n,responsavel:natureza==='Receita'?responsavel:'',contaDestino:natureza==='Transferência'?contaDestino:''}
     const atual=[...lancamentos,novo]
@@ -50,7 +71,7 @@ export default function LancamentosPage(){
 <section className="cards controlCards"><article><div className="cardIcon income"><ArrowDownLeft size={19}/></div><div><span>Entradas</span><strong>{moeda(entradas)}</strong><small>Na conta selecionada</small></div></article><article><div className="cardIcon expense"><ArrowUpRight size={19}/></div><div><span>Saídas</span><strong>{moeda(saidas)}</strong><small>Despesas da família</small></div></article><article><div className="cardIcon balance"><Wallet size={19}/></div><div><span>Saldo movimentado</span><strong>{moeda(saldo)}</strong><small>{conta} · {doMes.length} lançamento(s)</small></div></article></section>
 
 <section className="panel"><div className="panelHead"><div><h2>Movimentações de {conta}</h2><p>Receitas, despesas e transferências registradas nesta conta.</p></div><button className="primary" onClick={()=>setAberto(v=>!v)}><Plus size={16}/>{aberto?'Fechar':'Novo lançamento'}</button></div>
-{aberto&&<form onSubmit={salvar} className="launchForm"><div><label>Natureza</label><select value={natureza} onChange={e=>setNatureza(e.target.value as Natureza)}><option>Despesa</option><option>Receita</option><option>Transferência</option></select></div><div><label>Categoria</label><input value={categoria} onChange={e=>setCategoria(e.target.value)} placeholder="Ex.: Escola, salário, mercado"/></div><div><label>Descrição</label><input value={descricao} onChange={e=>setDescricao(e.target.value)} placeholder="Descrição do lançamento" required/></div><div><label>Valor</label><input value={valor} onChange={e=>setValor(e.target.value)} placeholder="0,00" inputMode="decimal" required/></div>{natureza==='Receita'&&<div><label>Responsável pela renda</label><select value={responsavel} onChange={e=>setResponsavel(e.target.value as Responsavel)}><option value="">Selecionar</option><option>Léo</option><option>Nat</option></select></div>}{natureza==='Transferência'&&<div><label>Conta destino</label><select value={contaDestino} onChange={e=>setContaDestino(e.target.value)} required><option value="">Selecionar</option>{contas.filter(c=>c!==conta).map(c=><option key={c}>{c}</option>)}</select></div>}<div className="formActions"><button type="button" onClick={()=>setAberto(false)}>Cancelar</button><button type="submit" className="primary">Salvar lançamento</button></div></form>}
+{aberto&&<form onSubmit={salvar} className="launchForm"><div><label>Natureza</label><select value={natureza} onChange={e=>setNatureza(e.target.value as Natureza)}><option>Despesa</option><option>Receita</option><option>Transferência</option></select></div><div><label>Categoria</label><input value={categoria} onChange={e=>setCategoria(e.target.value)} placeholder="Ex.: Escola, salário, mercado"/></div><div><label>Descrição</label><input value={descricao} onChange={e=>setDescricao(e.target.value)} placeholder="Descrição do lançamento" required/></div><div><label>Valor</label><input value={valor} onChange={e=>setValor(normalizarValor(e.target.value))} placeholder="0,00" inputMode="decimal" maxLength={18} required/><small className="formHint">Use até 2 casas decimais. Ex.: 1.250,50</small></div>{natureza==='Receita'&&<div><label>Responsável pela renda</label><select value={responsavel} onChange={e=>setResponsavel(e.target.value as Responsavel)}><option value="">Selecionar</option><option>Léo</option><option>Nat</option></select></div>}{natureza==='Transferência'&&<div><label>Conta destino</label><select value={contaDestino} onChange={e=>setContaDestino(e.target.value)} required><option value="">Selecionar</option>{contas.filter(c=>c!==conta).map(c=><option key={c}>{c}</option>)}</select></div>}<div className="formActions"><button type="button" onClick={()=>setAberto(false)}>Cancelar</button><button type="submit" className="primary">Salvar lançamento</button></div></form>}
 {doMes.length===0?<div className="empty">Nenhum lançamento em {mes}.<br/>Use <strong>Novo lançamento</strong> para registrar uma movimentação.</div>:<div className="launchList">{doMes.map(l=><div className="launchRow" key={l.id}><div className="launchNature">{l.natureza==='Receita'?<ArrowDownLeft size={15}/>:l.natureza==='Despesa'?<ArrowUpRight size={15}/>:<ArrowLeftRight size={15}/>}</div><div><strong>{l.descricao}</strong><small>{l.categoria}{l.responsavel?` · ${l.responsavel}`:''}{l.natureza==='Transferência'?` · → ${l.contaDestino}`:''}</small></div><b className={l.natureza==='Receita'?'positive':''}>{l.natureza==='Despesa'?'− ':l.natureza==='Receita'?'+ ':''}{moeda(l.valor)}</b><button className="iconButton" title="Excluir" onClick={()=>excluir(l.id)}><Trash2 size={15}/></button></div>)}</div>}</section>
 
 <section className="grid moduleBottom"><article className="panel"><div className="panelHead"><div><h2>Regra do lançamento</h2><p>Conta e natureza são informações diferentes.</p></div></div><p className="moduleNote">A conta identifica onde ocorreu a movimentação. A natureza identifica se é receita, despesa ou transferência. Transferências entre contas não entram no resultado familiar. Despesas permanecem da família; somente a renda pode ter responsável.</p></article><article className="panel"><div className="panelHead"><div><h2>Integração</h2><p>Base local preparada para alimentar o Controle.</p></div></div><p className="moduleNote">Os lançamentos ficam salvos neste navegador. A próxima integração fará a consolidação por mês e categoria sem individualizar as despesas por pessoa.</p></article></section></main></div>
