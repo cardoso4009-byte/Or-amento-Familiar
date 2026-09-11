@@ -19,3 +19,13 @@
 .monthlyTable .actionsHeader,.monthlyTable .actionCell{min-width:104px;width:104px}
 .monthlyTable .editButton{min-width:76px;padding:6px 7px;font-size:10px}
 .monthlyTable .monthlyCell input{width:78px;padding:5px;font-size:10px}
+
+
+/* Correção estrutural: largura real da coluna Indicador */
+.tableWrap{overflow-x:auto;overflow-y:hidden}
+.tableWrap .monthlyTable{table-layout:fixed;min-width:1450px;width:1450px}
+.tableWrap .monthlyTable th:first-child,.tableWrap .monthlyTable td:first-child{width:215px;min-width:215px;max-width:215px}
+.tableWrap .monthlyTable th:not(:first-child):not(:last-child),.tableWrap .monthlyTable td:not(:first-child):not(:last-child){width:94px;min-width:94px}
+.tableWrap .monthlyTable th:last-child,.tableWrap .monthlyTable td:last-child{width:103px;min-width:103px;max-width:103px}
+.tableWrap .monthlyTable .sectionLabel{width:215px;min-width:215px;max-width:215px;overflow:hidden}
+.tableWrap .monthlyTable .detailLabel{width:215px;min-width:215px;max-width:215px;overflow:hidden}
