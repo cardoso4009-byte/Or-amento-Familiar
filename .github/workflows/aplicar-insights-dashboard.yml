@@ -1,0 +1,41 @@
+name: Aplicar insights no dashboard
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ajustar Dashboard
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('app/controle/page.tsx')
+          s=p.read_text()
+          marker=' const receitaComp=receitaRows.map(r=>receitaMensal.reduce((s,_,i)=>s+valor(r.key,i),0));'
+          if 'const maiorReceita=' not in s:
+              s=s.replace(marker, marker+'\n const maiorReceita=receitaMensal.reduce((a,v,i)=>v>a.v?{v,i}:a,{v:-Infinity,i:0});const maiorDespesa=despesasMensal.reduce((a,v,i)=>v>a.v?{v,i}:a,{v:-Infinity,i:0});')
+          insight=''' <section className="panel insightsPanel"><div className="insightsIntro"><div className="insightIcon"><Lightbulb size={22}/></div><div><h2>Insights</h2><p>Principais pontos da sua situação financeira em 2026</p></div></div><div className="insightsGrid"><div className="insightItem"><TrendingUp size={19}/><div><span>Melhor mês de fluxo</span><strong>{moeda(melhor.v)}</strong><small>{meses[melhor.i]}</small></div></div><div className="insightItem"><TrendingDown size={19}/><div><span>Maior pressão financeira</span><strong>{moeda(pior.v)}</strong><small>{meses[pior.i]}</small></div></div><div className="insightItem"><BarChart3 size={19}/><div><span>Maior receita</span><strong>{moeda(maiorReceita.v)}</strong><small>{meses[maiorReceita.i]}</small></div></div><div className="insightItem"><Wallet size={19}/><div><span>Maior despesa</span><strong>{moeda(maiorDespesa.v)}</strong><small>{meses[maiorDespesa.i]}</small></div></div><div className="insightItem"><TrendingUp size={19}/><div><span>Evolução do ano</span><strong>{anual.fluxo>=0?'Positiva':'Negativa'}</strong><small>Saldo de {moeda(anual.fluxo)}</small></div></div><div className="insightItem attention"><Percent size={19}/><div><span>Ponto de atenção</span><strong>Comprometimento {pct(compromissoMedio)}</strong><small>da receita anual com despesas</small></div></div></div></section>'''
+          pattern=r'\n <section className="panel wideChart">.*?\n </main>'
+          s2=re.sub(pattern, '\n'+insight+'\n </main>', s, count=1, flags=re.S)
+          if s2==s:
+              raise SystemExit('Trecho do dashboard não encontrado')
+          p.write_text(s2)
+          PY
+      - name: Estilizar Insights
+        run: |
+          cat >> app/globals.css <<'CSS'
+
+/* Insights executivos — dashboard simplificado */
+.insightsPanel{margin-top:15px;padding:18px 20px;background:#f4fbf9;border-color:#d7ebe7;display:grid;grid-template-columns:250px 1fr;gap:22px;align-items:stretch}.insightsIntro{display:flex;align-items:center;gap:12px;padding-right:20px;border-right:1px solid #dcece9}.insightIcon{width:44px;height:44px;border-radius:12px;background:#e3f4ef;color:#0f766e;display:grid;place-items:center;flex:none}.insightsIntro h2{font-size:16px;margin:0;color:#20343d}.insightsIntro p{font-size:11px;line-height:1.45;color:#7d9198;margin:5px 0 0}.insightsGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:0}.insightItem{display:flex;align-items:center;gap:10px;padding:7px 17px;border-right:1px solid #dcece9;min-height:66px}.insightItem:nth-child(3n){border-right:0}.insightItem>svg{color:#0f766e;flex:none}.insightItem:nth-child(2)>svg,.insightItem:nth-child(4)>svg{color:#d05c60}.insightItem:nth-child(3)>svg{color:#16805f}.insightItem div{display:grid;gap:2px}.insightItem span{font-size:9px;color:#657980}.insightItem strong{font-size:12px;color:#0f766e}.insightItem:nth-child(2) strong,.insightItem:nth-child(4) strong{color:#c9575b}.insightItem small{font-size:9px;color:#82959b}.insightItem.attention>svg{color:#d99119}.insightItem.attention strong{color:#c47b08}@media(max-width:1100px){.insightsPanel{grid-template-columns:1fr}.insightsIntro{border-right:0;border-bottom:1px solid #dcece9;padding:0 0 14px}.insightsGrid{grid-template-columns:repeat(2,1fr)}.insightItem:nth-child(3n){border-right:1px solid #dcece9}.insightItem:nth-child(2n){border-right:0}}@media(max-width:700px){.insightsGrid{grid-template-columns:1fr}.insightItem{border-right:0!important;border-bottom:1px solid #dcece9}.insightItem:last-child{border-bottom:0}}
+CSS
+      - name: Commitar
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/controle/page.tsx app/globals.css
+          git commit -m "feat: simplificar dashboard e adicionar insights"
+          git push
