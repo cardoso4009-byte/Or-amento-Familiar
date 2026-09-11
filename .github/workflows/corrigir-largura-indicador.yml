@@ -1,0 +1,31 @@
+name: Corrigir largura Indicador
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    if: github.event.head_commit.author.name != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Aplicar largura fixa da tabela
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('app/globals.css')
+          s=p.read_text()
+          marker='/* Correção estrutural: largura real da coluna Indicador */'
+          if marker not in s:
+              s += '''\n\n/* Correção estrutural: largura real da coluna Indicador */\n.tableWrap{overflow-x:auto;overflow-y:hidden}\n.tableWrap .monthlyTable{table-layout:fixed;min-width:1450px;width:1450px}\n.tableWrap .monthlyTable th:first-child,.tableWrap .monthlyTable td:first-child{width:215px;min-width:215px;max-width:215px}\n.tableWrap .monthlyTable th:not(:first-child):not(:last-child),.tableWrap .monthlyTable td:not(:first-child):not(:last-child){width:94px;min-width:94px}\n.tableWrap .monthlyTable th:last-child,.tableWrap .monthlyTable td:last-child{width:103px;min-width:103px;max-width:103px}\n.tableWrap .monthlyTable .sectionLabel{width:215px;min-width:215px;max-width:215px;overflow:hidden}\n.tableWrap .monthlyTable .detailLabel{width:215px;min-width:215px;max-width:215px;overflow:hidden}\n'''
+              p.write_text(s)
+          PY
+      - name: Commitar correção
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/globals.css
+          git diff --cached --quiet && exit 0
+          git commit -m 'fix: reduzir coluna indicador da tabela'
+          git push
