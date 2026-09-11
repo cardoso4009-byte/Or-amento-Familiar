@@ -1,8 +1,5 @@
 name: Restaurar tabela do dashboard
-on:
-  push:
-    paths-ignore:
-      - 'app/controle/page.tsx'
+on: push
 permissions:
   contents: write
 jobs:
@@ -10,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Restaurar tabela e organizar insights
+      - name: Restaurar tabela
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -28,10 +25,8 @@ jobs:
  </tbody></table></div><p className="tableNote">As linhas detalhadas podem ser ajustadas manualmente. <b>Salários e recebíveis = Salários + Férias + 13º Salário + Bônus + IR / Dissídio.</b> <b>Despesas Totais = Despesas Fixas + Bancos e Acordos + Ajuste.</b> Despesas Diversas permanecem fora desse subtotal. O Fluxo de Caixa do Período é mensal; o Fluxo de Caixa é o saldo acumulado desses períodos.</p></section>
 '''
           marker='\n <section className="panel insightsPanel">'
-          if marker not in s:
-              raise SystemExit('Bloco Insights não encontrado')
-          if 'className="monthlyPanel"' not in s:
-              s=s.replace(marker, table+marker, 1)
+          if marker not in s: raise SystemExit('Bloco Insights não encontrado')
+          if 'className="monthlyPanel"' not in s: s=s.replace(marker, table+marker, 1)
           p.write_text(s)
           PY
       - name: Commitar
