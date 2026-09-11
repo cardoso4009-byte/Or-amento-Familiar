@@ -14,34 +14,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Compactar coluna Indicador
+      - name: Aplicar compactação final
         run: |
-          if [[ "${{ github.event.head_commit.message }}" == *"Compactação final da coluna Indicador"* ]]; then
-            exit 0
-          fi
+          if [[ "${{ github.event.head_commit.message }}" == *"Compactação final da coluna Indicador"* ]]; then exit 0; fi
           python - <<'PY'
           from pathlib import Path
-          p = Path('app/globals.css')
-          s = p.read_text(encoding='utf-8')
-          replacements = {
-              'min-width:250px;width:250px': 'min-width:215px;width:215px',
-              'padding-left:40px': 'padding-left:28px',
-              'gap:11px;text-align:left;padding:0 12px': 'gap:8px;text-align:left;padding:0 10px',
-              'min-width:112px;width:112px': 'min-width:104px;width:104px',
-              'min-width:1550px': 'min-width:1450px',
-          }
-          for old, new in replacements.items():
-              s = s.replace(old, new)
-          p.write_text(s, encoding='utf-8')
+          p=Path('app/globals.css')
+          s=p.read_text(encoding='utf-8')
+          s += '''\n/* Compactação final da tabela — coluna Indicador */\n.monthlyTableWrap{overflow-x:auto}\n.monthlyTable{min-width:1450px;font-size:11px}\n.monthlyTable .indicatorHeader,.monthlyTable .detailLabel,.monthlyTable .sectionLabel{min-width:215px;width:215px}\n.monthlyTable .indicatorHeader{padding-left:8px;padding-right:8px}\n.monthlyTable .detailLabel{padding-left:28px;padding-right:8px}\n.monthlyTable .sectionLabel{gap:8px;padding-left:10px;padding-right:10px;font-size:12px}\n.monthlyTable th{padding-left:7px;padding-right:7px;font-size:10px}\n.monthlyTable td{padding-left:7px;padding-right:7px}\n.monthlyTable .actionsHeader,.monthlyTable .actionCell{min-width:104px;width:104px}\n.monthlyTable .editButton{min-width:76px;padding:6px 7px;font-size:10px}\n.monthlyTable .monthlyCell input{width:78px;padding:5px;font-size:10px}\n'''
+          p.write_text(s,encoding='utf-8')
           PY
 
       - name: Commit e push
         run: |
-          if [[ "${{ github.event.head_commit.message }}" == *"Compactação final da coluna Indicador"* ]]; then
-            exit 0
-          fi
+          if [[ "${{ github.event.head_commit.message }}" == *"Compactação final da coluna Indicador"* ]]; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add app/globals.css
-          git diff --cached --quiet || git commit -m "Compactação final da coluna Indicador"
+          git commit -m "Compactação final da coluna Indicador"
           git push
