@@ -1,0 +1,42 @@
+name: Compactar tabela do Dashboard
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  compactar:
+    if: ${{ !contains(github.event.head_commit.message, 'Compactação final da coluna Indicador') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compactar coluna Indicador
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app/globals.css')
+          s = p.read_text(encoding='utf-8')
+          replacements = {
+              'min-width:250px;width:250px': 'min-width:215px;width:215px',
+              'padding-left:40px': 'padding-left:28px',
+              'gap:11px;text-align:left;padding:0 12px': 'gap:8px;text-align:left;padding:0 10px',
+              'min-width:112px;width:112px': 'min-width:104px;width:104px',
+              'min-width:1550px': 'min-width:1450px',
+          }
+          for old, new in replacements.items():
+              s = s.replace(old, new)
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Commit e push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/globals.css
+          git diff --cached --quiet || git commit -m "Compactação final da coluna Indicador"
+          git push
