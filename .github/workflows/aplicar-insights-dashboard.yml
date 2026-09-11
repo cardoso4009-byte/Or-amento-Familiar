@@ -1,6 +1,8 @@
 name: Aplicar insights no dashboard
 on:
-  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/aplicar-insights-dashboard.yml
 permissions:
   contents: write
 jobs:
