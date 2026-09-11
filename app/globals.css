@@ -29,3 +29,21 @@
 .tableWrap .monthlyTable th:last-child,.tableWrap .monthlyTable td:last-child{width:103px;min-width:103px;max-width:103px}
 .tableWrap .monthlyTable .sectionLabel{width:215px;min-width:215px;max-width:215px;overflow:hidden}
 .tableWrap .monthlyTable .detailLabel{width:215px;min-width:215px;max-width:215px;overflow:hidden}
+
+
+/* Ajuste final: tabela compacta horizontal e vertical */
+.tableWrap{overflow-x:auto;overflow-y:hidden}
+.tableWrap .monthlyTable{table-layout:fixed;min-width:1450px;width:1450px}
+.tableWrap .monthlyTable th:first-child,.tableWrap .monthlyTable td:first-child{width:215px;min-width:215px;max-width:215px}
+.tableWrap .monthlyTable th:not(:first-child):not(:last-child),.tableWrap .monthlyTable td:not(:first-child):not(:last-child){width:94px;min-width:94px}
+.tableWrap .monthlyTable th:last-child,.tableWrap .monthlyTable td:last-child{width:103px;min-width:103px;max-width:103px}
+.tableWrap .monthlyTable th{height:46px;padding:0 8px;font-size:10px}
+.tableWrap .monthlyTable td{height:43px;padding:0 8px;font-size:11px}
+.tableWrap .monthlyTable .detailLabel{height:43px;padding-left:34px;padding-right:8px;font-size:12px}
+.tableWrap .monthlyTable .sectionRow td{height:48px;font-size:12px}
+.tableWrap .monthlyTable .sectionLabel{height:48px;width:215px;min-width:215px;max-width:215px;padding:0 10px;gap:9px;font-size:13px;overflow:hidden}
+.tableWrap .monthlyTable .sectionLabel svg{width:18px;height:18px}
+.tableWrap .monthlyTable .sectionAction,.tableWrap .monthlyTable .actionCell{padding:0 7px!important}
+.tableWrap .monthlyTable .actionCell{min-width:103px;width:103px;max-width:103px}
+.tableWrap .monthlyTable .editButton{min-width:78px;padding:6px 7px;font-size:10px;border-radius:8px}
+.tableWrap .monthlyTable .monthlyCell input{width:78px;padding:5px 6px;font-size:10px}
