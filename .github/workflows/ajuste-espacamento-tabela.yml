@@ -1,0 +1,31 @@
+name: Ajustar espacamento da tabela
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  compactar:
+    if: github.event.head_commit.author.name != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compactar espacos horizontal e vertical
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('app/globals.css')
+          s=p.read_text()
+          marker='/* Ajuste final: tabela compacta horizontal e vertical */'
+          if marker not in s:
+              s += '''\n\n/* Ajuste final: tabela compacta horizontal e vertical */\n.tableWrap{overflow-x:auto;overflow-y:hidden}\n.tableWrap .monthlyTable{table-layout:fixed;min-width:1450px;width:1450px}\n.tableWrap .monthlyTable th:first-child,.tableWrap .monthlyTable td:first-child{width:215px;min-width:215px;max-width:215px}\n.tableWrap .monthlyTable th:not(:first-child):not(:last-child),.tableWrap .monthlyTable td:not(:first-child):not(:last-child){width:94px;min-width:94px}\n.tableWrap .monthlyTable th:last-child,.tableWrap .monthlyTable td:last-child{width:103px;min-width:103px;max-width:103px}\n.tableWrap .monthlyTable th{height:46px;padding:0 8px;font-size:10px}\n.tableWrap .monthlyTable td{height:43px;padding:0 8px;font-size:11px}\n.tableWrap .monthlyTable .detailLabel{height:43px;padding-left:34px;padding-right:8px;font-size:12px}\n.tableWrap .monthlyTable .sectionRow td{height:48px;font-size:12px}\n.tableWrap .monthlyTable .sectionLabel{height:48px;width:215px;min-width:215px;max-width:215px;padding:0 10px;gap:9px;font-size:13px;overflow:hidden}\n.tableWrap .monthlyTable .sectionLabel svg{width:18px;height:18px}\n.tableWrap .monthlyTable .sectionAction,.tableWrap .monthlyTable .actionCell{padding:0 7px!important}\n.tableWrap .monthlyTable .actionCell{min-width:103px;width:103px;max-width:103px}\n.tableWrap .monthlyTable .editButton{min-width:78px;padding:6px 7px;font-size:10px;border-radius:8px}\n.tableWrap .monthlyTable .monthlyCell input{width:78px;padding:5px 6px;font-size:10px}\n'''
+              p.write_text(s)
+          PY
+      - name: Commitar ajuste
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/globals.css
+          git diff --cached --quiet && exit 0
+          git commit -m 'fix: compactar espacamento da tabela'
+          git push
