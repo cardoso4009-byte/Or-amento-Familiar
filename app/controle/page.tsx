@@ -92,7 +92,7 @@ export default function ControlePage() {
 
   const valor = (linha: string, i: number) => Number(dados[linha]?.[i] || 0)
   const receitaRows = [{ label: 'Salários', key: 'Salários' }, { label: 'Férias', key: 'Férias' }, { label: '13º Salário', key: '13º Salário' }, { label: 'Bônus', key: 'Bônus' }, { label: 'IR / Dissídio', key: 'IR / Dissídio' }]
-  const despesaRows = [{ label: 'Despesas Fixas', key: 'Despesas Fixas' }, { label: 'Bancos e Acordos', key: 'Bancos e Acordos' }]
+  const despesaRows = [{ label: 'Despesas Fixas', key: 'Despesas Fixas' }, { label: 'Bancos e Acordos', key: 'Bancos e Acordos' }, { label: 'Ajuste', key: 'Ajuste Despesas Totais' }]
   const receitaMensal = meses.map((_, i) => receitaRows.reduce((s, r) => s + valor(r.key, i), 0))
   const despesasMensal = meses.map((_, i) => despesaRows.reduce((s, r) => s + valor(r.key, i), 0))
   const fluxoPeriodoCalculado = meses.map((_, i) => receitaMensal[i] - despesasMensal[i])
@@ -126,7 +126,7 @@ export default function ControlePage() {
           <tr className="sectionRow periodRow"><td className="sectionLabel"><BarChart3 size={25} /><strong>Fluxo de Caixa do Período</strong></td>{meses.map((m, i) => <td key={m}>{moeda(fluxoPeriodoCalculado[i])}</td>)}<td className="sectionAction">—</td></tr>
           <tr className="sectionRow commitmentRow"><td className="sectionLabel"><Percent size={25} /><strong>Comprometimento da Renda</strong></td>{meses.map((m, i) => { const renda = receitaMensal[i], desp = despesasMensal[i], v = renda > 0 ? desp / renda * 100 : 0; return <td key={m}>{v ? `${v.toFixed(1)}%` : '—'}</td> })}<td className="sectionAction">—</td></tr>
         </tbody></table></div>
-        <p className="tableNote">As linhas detalhadas podem ser ajustadas manualmente. Os subtotais de Salários e Recebíveis e Despesas Totais são recalculados automaticamente. O Fluxo de Caixa do Período é mensal; o Fluxo de Caixa é o saldo acumulado desses períodos.</p>
+        <p className="tableNote">As linhas detalhadas podem ser ajustadas manualmente. Os subtotais de Salários e Recebíveis e Despesas Totais são recalculados automaticamente. O Ajuste integra o subtotal de Despesas Totais e pode ser positivo ou negativo. O Fluxo de Caixa do Período é mensal; o Fluxo de Caixa é o saldo acumulado desses períodos.</p>
       </section>
       <section className="panel"><div className="panelHead"><div><h2>Análise detalhada</h2><p>Conta, fornecedor, categoria e lançamento ficam na segunda tela.</p></div><Link className="primary" href="/lancamentos">Abrir lançamentos →</Link></div></section>
     </main>
