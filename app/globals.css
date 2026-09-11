@@ -6,3 +6,16 @@
 
 /* Refinamento compacto da tabela: mais colunas visíveis e linhas mais enxutas */
 .tableWrap{overflow-x:auto;overflow-y:hidden;border:1px solid #e4ecee;border-radius:12px;background:#fff;box-shadow:0 3px 12px #102a3508}.monthlyTable{min-width:1460px;font-size:11px}.monthlyTable th{height:44px;padding:0 8px;font-size:10px}.monthlyTable td{height:42px;padding:0 8px;font-size:11px}.monthlyTable .indicatorHeader,.monthlyTable .detailLabel,.monthlyTable .sectionLabel{min-width:280px}.monthlyTable .detailLabel{padding-left:42px;font-size:12px}.monthlyTable .sectionLabel{gap:10px;padding:0 12px;font-size:13px}.monthlyTable .sectionRow td{height:48px;font-size:12px}.monthlyTable .actionsHeader,.monthlyTable .actionCell{min-width:110px}.monthlyTable .actionCell{padding:0 7px}.monthlyTable .editButton{min-width:82px;padding:6px 8px;font-size:10px}.monthlyTable .monthlyCell input{width:82px;padding:5px 6px;font-size:10px}.tableNote{margin-top:9px;font-size:9px}
+
+/* Compactação final da tabela — coluna Indicador */
+.monthlyTableWrap{overflow-x:auto}
+.monthlyTable{min-width:1450px;font-size:11px}
+.monthlyTable .indicatorHeader,.monthlyTable .detailLabel,.monthlyTable .sectionLabel{min-width:215px;width:215px}
+.monthlyTable .indicatorHeader{padding-left:8px;padding-right:8px}
+.monthlyTable .detailLabel{padding-left:28px;padding-right:8px}
+.monthlyTable .sectionLabel{gap:8px;padding-left:10px;padding-right:10px;font-size:12px}
+.monthlyTable th{padding-left:7px;padding-right:7px;font-size:10px}
+.monthlyTable td{padding-left:7px;padding-right:7px}
+.monthlyTable .actionsHeader,.monthlyTable .actionCell{min-width:104px;width:104px}
+.monthlyTable .editButton{min-width:76px;padding:6px 7px;font-size:10px}
+.monthlyTable .monthlyCell input{width:78px;padding:5px;font-size:10px}
