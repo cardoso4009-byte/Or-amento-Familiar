@@ -25,7 +25,7 @@ function Triple({receita,despesas,saldo}:{receita:number[];despesas:number[];sal
 
 export default function ControlePage(){
  const [dados,setDados]=useState<Dados>({});const [importado,setImportado]=useState(false);const [editando,setEditando]=useState<string|null>(null);const [rascunho,setRascunho]=useState<number[]>([]);const inputRef=useRef<HTMLInputElement>(null)
- useEffect(()=>{try{const s=localStorage.getItem(STORAGE_KEY);if(s){setDados(JSON.parse(s));setImportado(true)}}catch{}}
+ useEffect(()=>{try{const s=localStorage.getItem(STORAGE_KEY);if(s){setDados(JSON.parse(s));setImportado(true)}}catch{}})
  async function importar(file?:File){if(!file)return;try{const parsed=await parseArquivo(file);if(!Object.keys(parsed).length)throw new Error();setDados(parsed);localStorage.setItem(STORAGE_KEY,JSON.stringify(parsed));setImportado(true);setEditando(null)}catch{alert('Não foi possível importar. Selecione o modelo Excel (.xlsx/.xls) ou CSV com Jan/26 até Dez/26.')}finally{if(inputRef.current)inputRef.current.value=''}}
  const valor=(linha:string,i:number)=>Number(dados[linha]?.[i]||0)
  const receitaRows=[{label:'Salários',key:'Salários'},{label:'Férias',key:'Férias'},{label:'13º Salário',key:'13º Salário'},{label:'Bônus',key:'Bônus'},{label:'IR / Dissídio',key:'IR / Dissídio'}]
