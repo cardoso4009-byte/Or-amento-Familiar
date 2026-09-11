@@ -3,7 +3,6 @@ on:
   push:
     paths-ignore:
       - 'app/controle/page.tsx'
-      - '.github/workflows/restaurar-tabela-dashboard.yml'
 permissions:
   contents: write
 jobs:
@@ -18,9 +17,7 @@ jobs:
           import re
           p=Path('app/controle/page.tsx')
           s=p.read_text()
-          # Remove os dois blocos de gráficos/insights intermediários, preservando o bloco de insights já calculado.
           s=re.sub(r'\n <section className="panel wideChart">.*?</section>\n <section className="infoGrid">.*?</section>', '', s, count=1, flags=re.S)
-          # Remove o antigo bloco de insights antes do fechamento, caso exista, e insere a tabela antes do bloco Insights.
           table='''
  <section className="panel monthlyPanel"><div className="panelHead"><div><h2>Indicadores financeiros</h2><p>Valores em Reais (R$) · Jan/26 a Dez/26 · subtotais recalculados automaticamente</p></div></div><div className="tableWrap"><table className="monthlyTable"><thead><tr><th>Indicador</th>{meses.map(m=><th key={m}>{m}</th>)}<th>Ações</th></tr></thead><tbody>
  <tr className="sectionRow incomeRow"><td className="sectionLabel"><Users size={21}/><strong>Salários e recebíveis</strong></td>{meses.map((m,i)=><td key={m}>{moeda(receitaMensal[i])}</td>)}<td className="sectionAction">—</td></tr>{receitaRows.map(detail)}
@@ -30,16 +27,11 @@ jobs:
  <tr className="sectionRow commitmentRow"><td className="sectionLabel"><Percent size={21}/><strong>Comprometimento da Renda</strong></td>{meses.map((m,i)=><td key={m}>{pct(compromisso[i])}</td>)}<td className="sectionAction">—</td></tr>
  </tbody></table></div><p className="tableNote">As linhas detalhadas podem ser ajustadas manualmente. <b>Salários e recebíveis = Salários + Férias + 13º Salário + Bônus + IR / Dissídio.</b> <b>Despesas Totais = Despesas Fixas + Bancos e Acordos + Ajuste.</b> Despesas Diversas permanecem fora desse subtotal. O Fluxo de Caixa do Período é mensal; o Fluxo de Caixa é o saldo acumulado desses períodos.</p></section>
 '''
-          # O bloco de Insights atual começa após os gráficos. Posiciona a tabela antes dele.
           marker='\n <section className="panel insightsPanel">'
-          if marker in s and 'Indicadores financeiros</h2>' not in s:
-              s=s.replace(marker, table+marker, 1)
-          elif marker in s:
-              # tabela ausente ou já presente
-              if 'className="monthlyPanel"' not in s:
-                  s=s.replace(marker, table+marker, 1)
-          else:
+          if marker not in s:
               raise SystemExit('Bloco Insights não encontrado')
+          if 'className="monthlyPanel"' not in s:
+              s=s.replace(marker, table+marker, 1)
           p.write_text(s)
           PY
       - name: Commitar
