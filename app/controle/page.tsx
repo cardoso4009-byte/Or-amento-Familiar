@@ -15,8 +15,8 @@ const nav=[{href:'/controle',label:'Dashboard',icon:BarChart3},{href:'/lancament
 
 function normalizarTexto(raw:unknown){return String(raw??'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/º/g,'o').replace(/\\s+/g,' ').trim().toLowerCase()}
 function normalizarValor(raw:unknown){if(typeof raw==='number')return Number.isFinite(raw)?raw:0;let t=String(raw??'').trim().replace(/R\\$\\s?/gi,'');if(!t)return 0;if(t.includes(','))t=t.replace(/\\./g,'').replace(',','.');const n=Number(t);return Number.isFinite(n)?n:0}
-function chaveMes(v:unknown){if(v instanceof Date&&!Number.isNaN(v.getTime()))return meses[v.getMonth()]?.replace('/26','/'+String(v.getFullYear()).slice(-2))||'';if(v&&typeof v==='object'&&'getTime' in (v as object)){const d=new Date((v as Date).getTime());return meses[d.getMonth()]?.replace('/26','/'+String(d.getFullYear()).slice(-2))||''}return normalizarTexto(v)}
-function localizarCabecalho(rows:unknown[][]){let melhor=-1,maior=0;rows.slice(0,20).forEach((row,ri)=>{const encontrados=(row||[]).map(v=>chaveMes(v));const qtd=meses.filter(m=>encontrados.includes(normalizarTexto(m))).length;if(qtd>maior){maior=qtd;melhor=ri}});return melhor}
+function chaveMes(v:unknown){if(v instanceof Date&&!Number.isNaN(v.getTime()))return normalizarTexto(meses[v.getMonth()]?.replace('/26','/'+String(v.getFullYear()).slice(-2))||'');if(v&&typeof v==='object'&&'getTime' in (v as object)){const d=new Date((v as Date).getTime());return normalizarTexto(meses[d.getMonth()]?.replace('/26','/'+String(d.getFullYear()).slice(-2))||'')}return normalizarTexto(v)}
+function localizarCabecalho(rows:unknown[][]){let melhor=-1,maior=0;rows.slice(0,30).forEach((row,ri)=>{const encontrados=(row||[]).map(v=>chaveMes(v));const qtd=meses.filter(m=>encontrados.includes(normalizarTexto(m))).length;if(qtd>maior){maior=qtd;melhor=ri}});return melhor}
 function parseRows(rows:unknown[][]):Dados{
  const r:Dados={};const headerRow=localizarCabecalho(rows);if(headerRow<0)throw new Error('Não encontrei a linha de meses Jan/26 a Dez/26');
  const header=rows[headerRow]||[];const idx=meses.map(m=>header.findIndex(v=>chaveMes(v)===normalizarTexto(m)));
