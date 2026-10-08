@@ -18,15 +18,43 @@ function normalizarValor(raw:unknown){if(typeof raw==='number')return Number.isF
 function chaveMes(v:unknown){if(v instanceof Date&&!Number.isNaN(v.getTime()))return normalizarTexto(meses[v.getMonth()]?.replace('/26','/'+String(v.getFullYear()).slice(-2))||'');if(v&&typeof v==='object'&&'getTime' in (v as object)){const d=new Date((v as Date).getTime());return normalizarTexto(meses[d.getMonth()]?.replace('/26','/'+String(d.getFullYear()).slice(-2))||'')}return normalizarTexto(v)}
 function localizarCabecalho(rows:unknown[][]){let melhor=-1,maior=0;rows.slice(0,30).forEach((row,ri)=>{const encontrados=(row||[]).map(v=>chaveMes(v));const qtd=meses.filter(m=>encontrados.includes(normalizarTexto(m))).length;if(qtd>maior){maior=qtd;melhor=ri}});return melhor}
 function parseRows(rows:unknown[][]):Dados{
- const r:Dados={};const headerRow=localizarCabecalho(rows);if(headerRow<0)throw new Error('Não encontrei a linha de meses Jan/26 a Dez/26');
- const header=rows[headerRow]||[];const idx=meses.map(m=>header.findIndex(v=>chaveMes(v)===normalizarTexto(m)));
- const labelCol=header.findIndex(v=>normalizarTexto(v).includes('orcamento familiar'))>=0?header.findIndex(v=>normalizarTexto(v).includes('orcamento familiar')):(header.findIndex(v=>normalizarTexto(v)==='categoria')>=0?header.findIndex(v=>normalizarTexto(v)==='categoria'):0);
- const aliases:Record<string,string>={'salarios':'Salários','ferias':'Férias','13o salario':'13º Salário','13 salario':'13º Salário','bonus':'Bônus','ir / dissidio':'IR / Dissídio','ir/dissidio':'IR / Dissídio','despesas totais':'Despesas Totais','despesas totais >>>':'Despesas Totais','despesas fixas':'Despesas Fixas','bancos e acordos':'Bancos e Acordos','despesas diversas':'Despesas Diversas','ajuste':'Ajuste Despesas Totais','ajuste despesas totais':'Ajuste Despesas Totais','fluxo de caixa':'Fluxo de Caixa Planilha','fluxo de caixa >>>':'Fluxo de Caixa Planilha','fluxo de caixa do periodo':'Fluxo de Caixa do Período Planilha','fluxo de caixa do periodo >>>':'Fluxo de Caixa do Período Planilha'};
- const secCasa='Despesas com a casa',secLaura='Despesas com a Laura',secBanco='Despesas com Banco';
- (rows.slice(headerRow+1)).forEach(row=>{const original=String(row?.[labelCol]??'').trim();if(!original||normalizarTexto(original)==='categoria')return;const key=aliases[normalizarTexto(original)]||original;const vals=idx.map(i=>i<0?0:normalizarValor(row?.[i]));r[key]=vals});
+ const r:Dados={};
+ const headerRow=localizarCabecalho(rows);
+ if(headerRow<0)throw new Error('Não encontrei a linha de meses Jan/26 a Dez/26');
+ const header=rows[headerRow]||[];
+ const idx=meses.map(m=>header.findIndex(v=>chaveMes(v)===normalizarTexto(m)));
+ if(idx.some(i=>i<0))throw new Error('Não encontrei todos os meses Jan/26 a Dez/26');
+ const aliases:Record<string,string>={
+  'salarios':'Salários','ferias':'Férias','13o salario':'13º Salário','13 salario':'13º Salário',
+  'bonus':'Bônus','ir / dissidio':'IR / Dissídio','ir/dissidio':'IR / Dissídio',
+  'salarios e recebiveis':'Salários e recebíveis','renda familiar':'Renda Familiar',
+  'despesas totais':'Despesas Totais','despesas totais >>>':'Despesas Totais',
+  'despesas fixas':'Despesas Fixas','bancos e acordos':'Bancos e Acordos',
+  'despesas diversas':'Despesas Diversas','ajuste':'Ajuste Despesas Totais',
+  'ajuste despesas totais':'Ajuste Despesas Totais',
+  'fluxo de caixa':'Fluxo de Caixa Planilha','fluxo de caixa >>>':'Fluxo de Caixa Planilha',
+  'fluxo de caixa do periodo':'Fluxo de Caixa do Período Planilha',
+  'fluxo de caixa do periodo >>>':'Fluxo de Caixa do Período Planilha'
+ };
+ const conhecidos=new Set(Object.keys(aliases));
+ (rows.slice(headerRow+1)).forEach(row=>{
+  const candidatos=(row||[]).slice(0,Math.max(6,idx[0]+1)).map(v=>String(v??'').trim()).filter(Boolean);
+  if(!candidatos.length)return;
+  let original=candidatos.find(v=>conhecidos.has(normalizarTexto(v)));
+  if(!original){
+   const texto=candidatos.find(v=>/[A-Za-zÀ-ÿ]/.test(v)&&!/^\d+(?:[.,]\d+)?$/.test(v));
+   original=texto||'';
+  }
+  if(!original)return;
+  const key=aliases[normalizarTexto(original)]||original;
+  const vals=idx.map(i=>normalizarValor(row?.[i]));
+  r[key]=vals;
+ });
  const sec=(label:string)=>r[label]||[];
- if(!r['Bancos e Acordos']&&r[secBanco])r['Bancos e Acordos']=sec(secBanco);
- if(!r['Despesas Fixas']&&(r[secCasa]||r[secLaura]))r['Despesas Fixas']=meses.map((_,i)=>(sec(secCasa)[i]||0)+(sec(secLaura)[i]||0));
+ if(!r['Bancos e Acordos']&&r['Despesas Totais']&&r['Despesas Fixas'])
+  r['Bancos e Acordos']=meses.map((_,i)=>Math.max(0,(r['Despesas Totais']?.[i]||0)-(r['Despesas Fixas']?.[i]||0)));
+ if(!r['Despesas Fixas']&&(r['Despesas com a casa']||r['Despesas com a Laura']))
+  r['Despesas Fixas']=meses.map((_,i)=>(sec('Despesas com a casa')[i]||0)+(sec('Despesas com a Laura')[i]||0));
  if(!r['Ajuste Despesas Totais'])r['Ajuste Despesas Totais']=meses.map(()=>0);
  return r
 }
