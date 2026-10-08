@@ -55,7 +55,6 @@ function parseRows(rows:unknown[][]):Dados{
   r['Bancos e Acordos']=meses.map((_,i)=>Math.max(0,(r['Despesas Totais']?.[i]||0)-(r['Despesas Fixas']?.[i]||0)));
  if(!r['Despesas Fixas']&&(r['Despesas com a casa']||r['Despesas com a Laura']))
   r['Despesas Fixas']=meses.map((_,i)=>(sec('Despesas com a casa')[i]||0)+(sec('Despesas com a Laura')[i]||0));
- if(!r['Ajuste Despesas Totais'])r['Ajuste Despesas Totais']=meses.map(()=>0);
  return r
 }
 function parseCsv(text:string){const rows=text.replace(/^\\uFEFF/,'').trim().split(/\\r?\\n/).map(line=>{const d=line.includes(';')?';':',';return line.split(d).map(v=>v.trim().replace(/^\\\"|\\\"$/g,''))});return parseRows(rows)}
