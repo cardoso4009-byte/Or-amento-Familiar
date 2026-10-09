@@ -47,3 +47,103 @@
 .tableWrap .monthlyTable .actionCell{min-width:103px;width:103px;max-width:103px}
 .tableWrap .monthlyTable .editButton{min-width:78px;padding:6px 7px;font-size:10px;border-radius:8px}
 .tableWrap .monthlyTable .monthlyCell input{width:78px;padding:5px 6px;font-size:10px}
+
+
+/* Identidade visual premium — azul-petróleo, esmeralda e acentos vivos */
+:root{
+ --brand-ink:#082f3a;
+ --brand-teal:#006f68;
+ --brand-emerald:#00a889;
+ --brand-blue:#2878e8;
+ --brand-violet:#7257d9;
+ --brand-coral:#e34e55;
+ --brand-gold:#d99616;
+ --surface:#ffffff;
+ --line:#d8e7e9;
+}
+body{
+ background:
+  radial-gradient(ellipse at 76% 4%,rgba(0,168,137,.10),transparent 27%),
+  radial-gradient(ellipse at 97% 22%,rgba(40,120,232,.08),transparent 24%),
+  radial-gradient(ellipse at 42% 100%,rgba(217,150,22,.07),transparent 30%),
+  #f2f6f7;
+ color:#102f3b;
+}
+.sidebar{
+ background:linear-gradient(165deg,#062c38 0%,#073d49 58%,#005c57 100%);
+ border-right:1px solid rgba(82,211,194,.18);
+ box-shadow:8px 0 28px rgba(5,42,54,.08);
+}
+.brandMark{
+ background:linear-gradient(145deg,#00b99a,#08776f);
+ box-shadow:0 6px 18px rgba(0,185,154,.24);
+}
+nav a{transition:background .18s ease,color .18s ease,transform .18s ease}
+nav a.active{
+ background:linear-gradient(100deg,rgba(0,185,154,.30),rgba(36,141,163,.22));
+ box-shadow:inset 3px 0 #14d3b0,0 5px 18px rgba(0,0,0,.08);
+}
+nav a:hover{background:rgba(45,197,180,.14);transform:translateX(2px)}
+.eyebrow{color:#167d8b}
+h1{color:#092f40}
+.cards article,.panel{
+ background:rgba(255,255,255,.94);
+ border-color:#d8e7e9;
+ box-shadow:0 7px 22px rgba(10,48,61,.055),0 1px 3px rgba(10,48,61,.035);
+ backdrop-filter:blur(8px);
+}
+.cards article{
+ position:relative;
+ overflow:hidden;
+ border-top:3px solid #00a889;
+ transition:transform .18s ease,box-shadow .18s ease;
+}
+.cards article:nth-child(2){border-top-color:#e34e55}
+.cards article:nth-child(3){border-top-color:#2878e8}
+.cards article:nth-child(4){border-top-color:#7257d9}
+.cards article:nth-child(5){border-top-color:#d99616}
+.cards article:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(10,48,61,.09)}
+.cardIcon.income{background:linear-gradient(145deg,#d5fbef,#a7efdc);color:#007a6d}
+.cardIcon.expense{background:linear-gradient(145deg,#ffe2e1,#ffc4c5);color:#c52d3b}
+.cardIcon.balance{background:linear-gradient(145deg,#dceeff,#b9d8ff);color:#1d61c4}
+.cards article:nth-child(4) .cardIcon{background:linear-gradient(145deg,#e8e0ff,#cfc2ff);color:#6545c5}
+.cards article:nth-child(5) .cardIcon{background:linear-gradient(145deg,#fff0c9,#ffdfa0);color:#986300}
+.cards strong{color:#0a3040}
+.panel h2{color:#103b4b}
+.statusPill{
+ background:linear-gradient(110deg,#e0faf2,#e3f5ff);
+ border-color:#bce8df;color:#006b66;
+}
+.primary{background:linear-gradient(110deg,#008c7e,#006a69);box-shadow:0 4px 12px rgba(0,116,106,.18)}
+.primary:hover{background:linear-gradient(110deg,#00a18e,#007b78)}
+.lineChart .mainLine{stroke:#2167c9}
+.lineChart .linePoint{stroke:#2167c9}
+.legendIncome{background:#00a889}
+.legendExpense{background:#e34e55}
+.donutHole strong{color:#10384a}
+.chartLegend{color:#536f7b}
+.monthlyTable th{background:linear-gradient(105deg,#082f3d,#105467);border-color:rgba(255,255,255,.13)}
+.monthlyTable .incomeRow td{background:#e0f8f1}
+.monthlyTable .incomeRow .sectionLabel{background:#d1f3e9;color:#07584f}
+.monthlyTable .incomeRow .sectionLabel svg{color:#00977f}
+.monthlyTable .expenseRow td{background:#fff0ed}
+.monthlyTable .expenseRow .sectionLabel{background:#ffe2dc;color:#8f2833}
+.monthlyTable .expenseRow .sectionLabel svg{color:#df4b50}
+.monthlyTable .flowRow td{background:#eaf1ff}
+.monthlyTable .flowRow .sectionLabel{background:#dce7ff;color:#244b9a}
+.monthlyTable .flowRow .sectionLabel svg{color:#2878e8}
+.monthlyTable .periodRow td{background:#e6f8ee}
+.monthlyTable .periodRow .sectionLabel{background:#d4f3e0;color:#17613f}
+.monthlyTable .periodRow .sectionLabel svg{color:#16975b}
+.monthlyTable .commitmentRow td{background:#f1edff}
+.monthlyTable .commitmentRow .sectionLabel{background:#e5ddff;color:#4d3b9a}
+.monthlyTable .commitmentRow .sectionLabel svg{color:#7257d9}
+.monthlyTable .editButton{background:linear-gradient(110deg,#e5fbf5,#e9f7ff);border-color:#b9e7df;color:#007b76}
+.monthlyTable .editButton svg{color:#009e91}
+.monthlyTable .saveButton{background:linear-gradient(110deg,#009b83,#08706b)}
+.monthlyTable .monthlyCell input:focus{border-color:#00a889;box-shadow:0 0 0 3px rgba(0,168,137,.14)}
+.tableWrap,.monthlyTableWrap{border-color:#d8e7e9;box-shadow:0 7px 22px rgba(10,48,61,.05)}
+.tableNote{color:#68818a}
+@media(max-width:700px){
+ body{background:radial-gradient(ellipse at 80% 0%,rgba(0,168,137,.08),transparent 35%),#f2f6f7}
+}
